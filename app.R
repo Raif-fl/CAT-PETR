@@ -44,7 +44,6 @@ glob_quant_num = 2.5
 glob_heat_num = 3
 glob_heat_comps = NULL
 glob_sort_by = 0
-glob_tolerate_na = NULL
 
 ##### Define UI logic #####
 ui = navbarPage("CAT PETR",

@@ -20,7 +20,7 @@ num = reactive({input$num}) %>% debounce(100)
 
 ##### Overarching reactive UI #####
 
-# Creates a numeric input which allows the user to choose how many of the top proteins to label. 
+# Creates a numeric input which allows the user to choose how many of the top genes/proteins to label. 
 output$num <- renderUI({
   if (input$tabset == "sc_plot" | input$tabset == "vp_plot") {
     numericInput("num", label = h5("Label top genes/proteins"), value = glob_num, step = 1)
@@ -28,7 +28,7 @@ output$num <- renderUI({
 })
 observeEvent(num(), {glob_num <<- num()})
 
-# Creates a numeric input which allows the user to choose how many of the top proteins to label. 
+# Creates a numeric input which allows the user to choose how many of the top genes/proteins to label. 
 output$label_options <- renderUI({
   options = c("Name","P_site", "Identifier")
   columns = colnames(values$data[[1]])
@@ -39,7 +39,7 @@ output$label_options <- renderUI({
 
 ##### Volcano plot reactive UI #####
 
-# Creates a button that adds the proteins with the highest p-value/log2 FC to the protein search bar. 
+# Creates a button that adds the genes/proteins with the highest p-value/log2 FC to the gene/protein search bar. 
 output$vp_top_bttn <- renderUI({
   if (input$tabset == "vp_plot") {
     actionButton("vp_top_bttn", label = "Add top entries to search bar.", style='padding:6px; font-size:90%')
@@ -101,8 +101,8 @@ output$define_axis <- renderUI({
   }
 })
 
-# Creates a button which allows the user to add the proteins with the largest difference 
-# in log fold change to the protein search bar. 
+# Creates a button which allows the user to add the genes/proteins with the largest difference 
+# in log fold change to the gene/protein search bar. 
 output$sc_top_bttn <- renderUI({
   if (input$tabset == "sc_plot") {
     actionButton("sc_top_bttn", label = "Add top entries to search bar.", style='padding:6px; font-size:90%')
@@ -186,7 +186,7 @@ output$hmap_dwnld_bttn <- renderUI({
   }
 })
 
-##### Controlling the protein search bar. #####
+##### Controlling the gene/protein search bar. #####
 
 # Updates the select input using the server for increased performance. 
 observeEvent(values$data, {
@@ -317,18 +317,18 @@ v_plot = reactive({
                           mycolors = c("blue", "red", "black", "green"), text_size = t_size_vp(),
                           axes_text_size = atx_size_vp(), axes_label_size = ati_size_vp(),
                           point_sizes = c(np_size_vp(), sp_size_vp()),box_pad = box_pad_vp(),
-                          repel = T, label_options = input$label_options)
+                          label_options = input$label_options)
 
   return(plot)
 })
 
 ##### Volcano plot additional #####
 
-# Convert the top proteins into highlighted proteins. 
+# Highlight the top genes/proteins. 
 observeEvent(input$vp_top_bttn, {
   top = v_plot()[[2]]
   
-  # Ignore top proteins that are already in global_search. 
+  # Ignore top genes/proteins that are already in global_search. 
   top = top[!top %in% global_search]
   
   # Update selected points.
@@ -415,18 +415,18 @@ sc_plot = reactive({
                         quant_int = quant_int, line_color = "blue", int_color = "red",
                         text_size = t_size_sc(), point_size = p_size_sc(),
                         axes_text_size = atx_size_sc(), axes_label_size = ati_size_sc(),
-                        box_pad = box_pad_sc(), repel = T, label_options = input$label_options)
+                        box_pad = box_pad_sc(), label_options = input$label_options)
   
   return(plot)
 })
 
 ##### Scatter plot additional #####
 
-# Convert the top proteins into highlighted proteins. 
+# Highlight the top proteins.
 observeEvent(input$sc_top_bttn, {
   top = sc_plot()[[2]]
   
-  # Ignore top proteins that are already in global_search. 
+  # Ignore top genes/proteins that are already in global_search. 
   top = top[!top %in% global_search]
   
   # Update selected points.
@@ -474,7 +474,7 @@ heatmap = reactive({
   sort_by = input$sort_by
   req(heat_comps, bound, name_search, input$heat_num, sort_by)
 
-  # Subset bound to only look at relevant proteins/genes. 
+  # Subset bound to only look at relevant genes/proteins. 
   bound = subset(bound, full_name %in% name_search)
   
   # See if there are any duplicate labels and use the fullnames for them. 
@@ -486,7 +486,7 @@ heatmap = reactive({
   bound$full_name = factor(x = bound$full_name, levels = name_search)
   bound = bound[order(bound$full_name, decreasing = T),]
   
-  # Reorder and factor the Protein column so the heatmap row order matches name input order. 
+  # Reorder and factor the Name column so the heatmap row order matches name input order. 
   bound$Name = factor(x = bound$Name, levels = unique(bound$Name))
   
   # Remove unneeded columns
@@ -596,7 +596,7 @@ output$vp_data_all = downloadHandler(
   }
 )
 
-# Download the volcano plot data for proteins in the searchbar. 
+# Download the volcano plot data for genes/proteins in the searchbar. 
 output$vp_data_top = downloadHandler(
   filename = function() {
     paste(input$vp_slider, ".tsv", sep = "")
@@ -621,7 +621,7 @@ output$sc_data_all = downloadHandler(
   }
 )
 
-# Download the scatter plot data for just the proteins in the searchbar. 
+# Download the scatter plot data for just the genes/proteins in the searchbar. 
 output$sc_data_top = downloadHandler(
   filename = function() {
     paste(input$sc_slider, ".tsv", sep = "")

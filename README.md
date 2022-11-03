@@ -32,9 +32,9 @@ This is a simple tutorial that covers the data upload and visualization sections
 
     ![](www/bucket_list.png)
 
-6.  Once the controls and treatments are selected, the user must choose between conducting a traditional two-sample t-test and an adjusted Cyber-T t-test. For more information on Cyber-T, please see the [Cyber-T Reference](https://pubmed.ncbi.nlm.nih.gov/22600740/).
+    Once the controls and treatments are selected, the user must choose between conducting a traditional two-sample t-test and an adjusted Cyber-T t-test. For more information on Cyber-T, please see the [Cyber-T Reference](https://pubmed.ncbi.nlm.nih.gov/22600740/).
 
-    Please select the Cyber-T t-test and then hit the 'run pairwise comparisons' button. The comparison should be completed in under 30 seconds. Once completed, we can move on to the next section of the tutorial.
+6.  Please select the Cyber-T t-test and then hit the 'run pairwise comparisons' button. The comparison should be completed in under 30 seconds. Once completed, we can move on to the next section of the tutorial.
 
 ## Visualization Tab
 

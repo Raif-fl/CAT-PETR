@@ -162,18 +162,16 @@ compare_CyberT = function(dataframes, controls, treatments, analysis = NULL,
 ##    axes_label_size = size of text used for the axes labels.
 ##    point_size = A vector which contains the sizes of the non-significant and significant
 ##                 data points respectively. 
+##    range = the range shown on the X-axis. 
 ##    box_pad = amount of padding around the label boxes. 
 ##    point_pad = amount of padding around the labelled data points. 
-##    range = the range shown on the X-axis. 
+##    label_options = The parts of the label that will be included. 
 #######################################################################
-
-dist <- function(a, b) sqrt(sum((c(a, b) - c(0,0))^2))
 
 volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), P_cutoff = 3,
                              mycolors = c("blue", "red", "black", "green"), text_size = 3,
-                             axes_text_size = 2, axes_label_size = 3,
-                             point_sizes = c(1, 2), range = NULL,
-                             box_pad = 0.3, point_pad = 0.2, repel = F, 
+                             axes_text_size = 2, axes_label_size = 3,  point_sizes = c(1, 2),
+                             range = NULL, box_pad = 0.3, point_pad = 0.2, 
                              label_options = c("Name", "P_site", "Identifier")) {
   
   # Remove infinite and NA values. 
@@ -224,7 +222,7 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
     range = c(-max_lim-1, max_lim+1)
   }
 
-  # Create the plot. 
+  # Create the base scatter plot.
   base_plot = ggplot(data=map_df(arrange(data, delabel), rev),
                      aes(x=log2_FC, y=log_p, col=reg, size = size_p)) +
     geom_point() + 
@@ -239,8 +237,8 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
     theme(legend.position="none", axis.text = element_text(size = axes_text_size),
           axis.title = element_text(size = axes_label_size))
   
-  if (repel == TRUE) {
-    plot = base_plot + geom_label_repel(aes(label = delabel),
+  # Add the labels.
+  plot = base_plot + geom_label_repel(aes(label = delabel),
                        size = text_size,
                        label.size = NA,
                        min.segment.length = 0.000001,
@@ -254,10 +252,6 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
                        arrow = arrow(length = unit(0.07, "inches")),
                        show.legend = FALSE) +
                        scale_y_continuous(expand = expansion(mult = 0.1))
-  } else if (repel == FALSE){
-    plot = base_plot + geom_label(data = data, aes(group = full_name, label = delabel), 
-              nudge_x = 0.25, nudge_y = 0.25, size = text_size)
-  }
   
   return(list(plot, unique(top_reg[!is.na(top_reg)])))
 }
@@ -281,12 +275,14 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
 ##    point_size: The size to be used for the data points. 
 ##    box_pad = amount of padding around the label boxes. 
 ##    point_pad = amount of padding around the labelled datapoint. 
+##    mycolors = The colors that will be used for points within, above, and below quants along 
+##               with the color used for additional labels specified in to_label. 
+##    label_options = The parts of the label that will be included. 
 #######################################################################
 
 one_to_one_app = function (data, comp1, comp2, to_label = c(), top = 0, quant_int = c(0.01, 0.99),
                            line_color = "blue", int_color = "red", text_size = 2.3,  point_size = 1,
-                           axes_text_size = 2, axes_label_size = 3,
-                           box_pad = 0.3, point_pad = 0.2, repel = TRUE,
+                           axes_text_size = 2, axes_label_size = 3, box_pad = 0.3, point_pad = 0.2,
                            mycolors = c("black", "black", "black", "green"),
                            label_options = c("Name", "P_site", "Identifier")) {
   
@@ -353,8 +349,7 @@ one_to_one_app = function (data, comp1, comp2, to_label = c(), top = 0, quant_in
   x_max = abs_max(data[[comp1]])
   
   # Add the labels. 
-  if (repel == TRUE) {
-    label_plot = base_plot + geom_label_repel(aes(label = delabel),
+  label_plot = base_plot + geom_label_repel(aes(label = delabel),
                                               size = text_size,
                                               min.segment.length = 0.000001,
                                               label.size = NA,
@@ -368,10 +363,6 @@ one_to_one_app = function (data, comp1, comp2, to_label = c(), top = 0, quant_in
                                               show.legend = FALSE) + 
       coord_cartesian(xlim = c(-x_max-1, x_max+1),
                       ylim = c(-y_max-1, y_max+1))
-  } else if (repel == FALSE){
-    label_plot = base_plot + geom_label(data = data, aes(group = full_name, label = delabel), 
-                                  nudge_x = 0.25, nudge_y = 0.25, size = text_size)
-  }
   
   return(list(label_plot, unique(top_reg[!is.na(top_reg)])))
 }
@@ -439,7 +430,7 @@ hmap_prep = function (dataframes, title = "", values = "log2_FC", order = c(),
 #######################################################################
 
 hmap = function(bound, name_search, sort_by, heat_comps, heat_num = 3, height_hmap = 30,
-                text_size = 12, lg_title_size = 11, lg_text_size = 10, tol = 999){
+                text_size = 12, lg_title_size = 11, lg_text_size = 10){
   
   # Convert to a matrix. 
   bound_mat = data.matrix(bound)
