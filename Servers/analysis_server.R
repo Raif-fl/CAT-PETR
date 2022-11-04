@@ -452,7 +452,7 @@ output$download_sc <- downloadHandler(
   filename = function() { paste(input$sc_slider, '_sc_plot.svg', sep='') },
   content = function(file) {
     ggsave(file, plot = sc_plot()[[1]], device = "svg",
-           height = input$height_sc*4, width = input$width_sc*4, units = "px")
+           height = input$height_sc*4.4, width = input$width_sc*4.4, units = "px")
   }
 )
 
