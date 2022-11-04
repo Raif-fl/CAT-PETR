@@ -148,14 +148,57 @@ output$sc_dwnld_top <- renderUI({
 
 ##### Heat map reactive UI #####
 
+output$heading <- renderUI(if (input$tabset == "heatmap") {h5("Color Bar Options")})
+
+# Create two inputs for controlling the type of colourbar. 
+output$color_type  <- renderUI({
+  if (input$tabset == "heatmap") {
+    selectInput("color_type", label = "Type", choices = c("Diverging", "Sequential"),
+                selected = "Diverging")
+  }
+})
+output$color_choice  <- renderUI({
+  req(input$color_type)
+  if (input$tabset == "heatmap") {
+    all = RColorBrewer::brewer.pal.info
+    if (input$color_type == "Diverging") {
+      choices = rownames(all[all$category == "div",])
+    } else if (input$color_type == "Sequential") {
+      choices = rownames(all[all$category == "seq",])
+    }
+    selectInput("color_choice", label = "Color Choice", choices = choices,
+                selected = "RdBu")
+  }
+})
+
 # Creates a numeric input that lets the user choose the range for the color bar
 output$heat_num <- renderUI({
+  bound = bound()
+  name_search = name_search_b()
+  bound = subset(bound, full_name %in% name_search)
+  req(bound, input$color_type)
   if (input$tabset == "heatmap") {
-    numericInput("heat_num", label = h5("Colorbar Range"), min = 0, 
-                 max = 20, value = glob_heat_num, step = 0.1)
+    if (input$color_type == "Diverging") {
+      min = -1*abs_max(bound$log2_FC)
+      max = abs_max(bound$log2_FC)
+      if (length(glob_heat_num) < 2) {glob_heat_num = c(min, max)}
+    } else if (input$color_type == "Sequential") {
+      min = min(bound$log2_FC)
+      max = max(bound$log2_FC)
+      if (length(glob_heat_num) < 2) {glob_heat_num = c(min, max)}
+    }
+    sliderInput("heat_num", label = "Range", min = floor(min), 
+                 max = ceiling(max), value = glob_heat_num, step = 0.1)
   }
 })
 observeEvent(input$heat_num, {glob_heat_num <<- input$heat_num})
+
+# Allow the user to reverse the colourbar at will. 
+output$reverse_scale <- renderUI({
+  if (input$tabset == "heatmap") {
+    checkboxInput("reverse_scale", "Flip Color Bar?", value = TRUE)
+  }
+})
 
 # Creates a set of checkboxes that allow the user to choose which comparisons are shown on the heatmap.
 output$heat_comps <- renderUI({
@@ -314,10 +357,10 @@ v_plot = reactive({
 
   plot = volcano_plot_app(comparisons[[vp_slider]], to_label = name_search, top = num(),
                           FC_range = c(-input$FC_slider, input$FC_slider), P_cutoff = input$P_slider,
-                          mycolors = c("blue", "red", "black", "green"), text_size = t_size_vp(),
-                          axes_text_size = atx_size_vp(), axes_label_size = ati_size_vp(),
-                          point_sizes = c(np_size_vp(), sp_size_vp()),box_pad = box_pad_vp(),
-                          label_options = input$label_options)
+                          mycolors = c(input$downreg, input$upreg, input$notsig, input$Additional1),
+                          text_size = t_size_vp(), axes_text_size = atx_size_vp(),
+                          axes_label_size = ati_size_vp(), point_sizes = c(np_size_vp(), sp_size_vp()),
+                          box_pad = box_pad_vp(), label_options = input$label_options)
 
   return(plot)
 })
@@ -414,6 +457,7 @@ sc_plot = reactive({
   plot = one_to_one_app(in_common, comp1, comp2, to_label = name_search, top = num(),
                         quant_int = quant_int, line_color = "blue", int_color = "red",
                         text_size = t_size_sc(), point_size = p_size_sc(),
+                        mycolors = c(input$withquant, input$blwquant, input$abvquant, input$Additional2),
                         axes_text_size = atx_size_sc(), axes_label_size = ati_size_sc(),
                         box_pad = box_pad_sc(), label_options = input$label_options)
   
@@ -511,7 +555,8 @@ heatmap = reactive({
   # Create the heatmap
   heatmap = hmap(bound_wide, name_search, sort_by, heat_comps, heat_num = input$heat_num,
                  height_hmap = input$height_hmap, text_size = input$t_size_hm,
-                 lg_title_size = input$lg_title_size, lg_text_size = input$lg_text_size)
+                 lg_title_size = input$lg_title_size, lg_text_size = input$lg_text_size,
+                 color_choice = input$color_choice, reverse_scale = input$reverse_scale)
 
   # Define the height and width to be used on the plot. 
   width = length(heat_comps)*input$width_hmap + 260

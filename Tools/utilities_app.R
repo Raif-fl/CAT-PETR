@@ -390,7 +390,7 @@ abs_max = function(vector) {
 ##            the columns in the heatmap. 
 #######################################################################
 
-hmap_prep = function (dataframes, title = "", values = "log2_FC", order = c(),
+hmap_prep = function (dataframes, title = "", order = c(),
                       label_options = c("Name", "P_site", "Identifier")) {
   
   # add the name of the comparison to a column on the respective dataframe
@@ -405,7 +405,7 @@ hmap_prep = function (dataframes, title = "", values = "log2_FC", order = c(),
   bound$Name = do.call(paste, c(bound[label_options], sep=" "))
   
   # subset the bound data in order to focus on the meaningful columns. 
-  bound = subset(bound, select = c("Name", "comp", values, "full_name"))
+  bound = subset(bound, select = c("Name", "comp", "log2_FC", "full_name"))
   
   # rearrange the order of the columns
   if (length(order) > 0) {
@@ -429,8 +429,9 @@ hmap_prep = function (dataframes, title = "", values = "log2_FC", order = c(),
 ##    lg_text_size = the size of the text used for the tick marks on the legend. 
 #######################################################################
 
-hmap = function(bound, name_search, sort_by, heat_comps, heat_num = 3, height_hmap = 30,
-                text_size = 12, lg_title_size = 11, lg_text_size = 10){
+hmap = function(bound, name_search, sort_by, heat_comps, heat_num, height_hmap = 30,
+                text_size = 12, lg_title_size = 11, lg_text_size = 10, color_choice = "RdBu",
+                reverse_scale = TRUE){
   
   # Convert to a matrix. 
   bound_mat = data.matrix(bound)
@@ -441,20 +442,20 @@ hmap = function(bound, name_search, sort_by, heat_comps, heat_num = 3, height_hm
   
   # Create a matrix where everything is set to right below the maximum values defined by the
   # user. 
-  bound_mat[bound_mat > heat_num] = heat_num - 0.001
-  bound_mat[bound_mat < -heat_num] = -heat_num + 0.001
+  bound_mat[bound_mat > heat_num[2]] = heat_num[2] - 0.001
+  bound_mat[bound_mat < heat_num[1]] = heat_num[1] + 0.001
   
   # Get the length of the matrix along the X-axis
   mat_length = length(bound_mat[,1])
   
   # Create the heatmap. 
-  heatmap = plot_ly(colors = "RdBu") %>%
-    add_heatmap(x = colnames(bound_mat), y = rownames(bound_mat), z = bound_mat, reversescale = TRUE,
-                text = bound_mat2, zmin = -heat_num, zmax = heat_num,
+  heatmap = plot_ly(colors = color_choice) %>%
+    add_heatmap(x = colnames(bound_mat), y = rownames(bound_mat), z = bound_mat, reversescale = reverse_scale,
+                text = bound_mat2, zmin = heat_num[1], zmax = heat_num[2],
                 hovertemplate = paste('Name: %{y}<extra></extra><br>',
                                       'Comparison: %{x}<br>',
                                       'Log2 FC: %{text}'),
-                colorbar = list(limits = c(-heat_num, heat_num),
+                colorbar = list(limits = c(heat_num[1], heat_num[2]),
                                 len = (120 + (mat_length*height_hmap)/2), lenmode = "pixels",
                                 title = list(text = "log2 FC", font = list(size = lg_title_size)),
                                 tickfont = list(size = lg_text_size), yanchor = "middle")) %>%

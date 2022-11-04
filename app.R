@@ -12,6 +12,7 @@ library(glue)
 library(vroom) 
 library(DT) 
 library(stringr) 
+library(colourpicker)
 
 # Source the tools and tabs. 
 source('Tools/utilities_app.R', local = TRUE)
@@ -42,7 +43,7 @@ glob_num = 20
 glob_P_slider = 3
 glob_FC_slider = 1
 glob_quant_num = 2.5
-glob_heat_num = 3
+glob_heat_num = c()
 glob_heat_comps = NULL
 glob_sort_by = 0
 
