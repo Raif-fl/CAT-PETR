@@ -39,7 +39,8 @@ global_x = list()
 global_y = list()
 
 # Create a set of universal variables that hold the selected values of each piece of reactive UI. 
-glob_num = 20
+glob_sc_top = 20
+glob_vp_top = 20
 glob_P_slider = 3
 glob_FC_slider = 1
 glob_quant_num = 2.5

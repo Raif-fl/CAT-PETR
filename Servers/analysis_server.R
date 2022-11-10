@@ -16,17 +16,22 @@ p_size_sc = reactive({input$p_size_sc}) %>% throttle(1000)
 box_pad_sc = reactive({input$box_pad_sc}) %>% throttle(1000) 
 
 # Use debounce to keep a user from changing the number of top labelled genes/proteins too quickly.
-num = reactive({input$num}) %>% debounce(100)
+sc_top = reactive({input$sc_top}) %>% debounce(100)
+vp_top = reactive({input$vp_top}) %>% debounce(100)
+
+##### Colour Lists #####
+div_list = list("Brown Blue Green" = "BrBG","Pink Yello Green" = "PiYG", "Purple Green" = "PRGn",
+                "Purple Orange" = "PuOr", "Red Blue" = "RdBu", "Red Grey" = "RdGy", "Red Yellow Blue" = "RdYlBu",
+                "Red Yellow Green" = "RdYlGn", "Spectral" = "Spectral")
+
+seq_list = list("Blues" = "Blues", "Blue Green" = "BuGn", "Blue Purple" = "BuPu", "Green Blue" = "GnBu",
+                "Greens" = "Greens", "Greys" = "Greys", "Oranges" = "Oranges", "Orange Red" = "OrRd",
+                "Purple Brown" = "PuBu", "Purple blue Green" = "PuBuGn", "Purple Red" = "PuRd", 
+                "Purples" = "Purples", "Red Purple" = "RdPu", "Reds" = "Reds", "Yellow Green" = "YlGn",
+                "Yellow Green Blue" = "YlGnBu", "Yellow Orange Brown", "YlOrBr", 
+                "Yellow Orange Red" = "YlOrRd")
 
 ##### Overarching reactive UI #####
-
-# Creates a numeric input which allows the user to choose how many of the top genes/proteins to label. 
-output$num <- renderUI({
-  if (input$tabset == "sc_plot" | input$tabset == "vp_plot") {
-    numericInput("num", label = h5("Label top genes/proteins"), value = glob_num, step = 1)
-  }
-})
-observeEvent(num(), {glob_num <<- num()})
 
 # Creates a numeric input which allows the user to choose how many of the top genes/proteins to label. 
 output$label_options <- renderUI({
@@ -34,51 +39,34 @@ output$label_options <- renderUI({
   columns = colnames(values$data[[1]])
   choice = columns[columns %in% options]
   checkboxGroupInput("label_options", label = h5("plot labels include:"),
-                     choices = choice, selected = "Name")
+                     choices = choice, selected = "Name", inline = TRUE)
 })
 
 ##### Volcano plot reactive UI #####
 
-# Creates a button that adds the genes/proteins with the highest p-value/log2 FC to the gene/protein search bar. 
-output$vp_top_bttn <- renderUI({
+# Create the set of UI inputs which appear when a user switches to the volcano plot tab.  
+output$vp_sidebar <- renderUI({
   if (input$tabset == "vp_plot") {
-    actionButton("vp_top_bttn", label = "Add top entries to search bar.", style='padding:6px; font-size:90%')
+    tagList(
+      numericInput("vp_top", label = h5("Label top genes/proteins"), value = glob_sc_top, max = 100, step = 1),
+      materialSwitch("sig_label", label = "Label all genes/proteins outside cutoffs", right = TRUE, status = "info"),
+      actionButton("vp_top_bttn", label = "Add labelled entries to search bar.", style='padding:6px; font-size:90%'),
+      sliderInput("P_slider", label = h5("Log 10 P-value cutoff"), min = 0, 
+                  max = 8, value = glob_P_slider, step = 0.1),
+      sliderInput("FC_slider", label = h5("Log 2 fold change cutoff"), min = 0, 
+                  max = 3, value = glob_FC_slider, step = 0.1),
+      h6(""),
+      downloadBttn("vp_data_all", label = "Download All Plot Data", style='simple', size = "sm", block = TRUE),
+      h6(""),
+      downloadBttn("vp_data_top", label = "Download Plot Data for Search Bar Entries", style='simple', size = "sm", block = TRUE)
+    )
   }
 })
 
-# Creates a slider that lets the user choose the P-value cuttoff. 
-output$P_slider <- renderUI({
-  if (input$tabset == "vp_plot") {
-    sliderInput("P_slider", label = h5("Log 10 P-value cutoff"), min = 0, 
-                max = 8, value = glob_P_slider, step = 0.1)
-  }
-})
+# Add the inputs to global variables whenever they are changed so that they stay constant when switching tabs. 
+observeEvent(sc_top(), {glob_sc_top <<- sc_top()})
 observeEvent(input$P_slider, {glob_P_slider <<- input$P_slider})
-
-# Creates a slider that lets the user choose the fold change cuttoff.
-output$FC_slider <- renderUI({
-  if (input$tabset == "vp_plot") {
-    sliderInput("FC_slider", label = h5("Log 2 fold change cutoff"), min = 0, 
-                max = 3, value = glob_FC_slider, step = 0.1)
-  }
-})
 observeEvent(input$FC_slider, {glob_FC_slider <<- input$FC_slider})
-
-# Creates the vp_plot data download button for all datapoints.
-output$vp_dwnld_all <- renderUI({
-  if (input$tabset == "vp_plot") {
-    downloadButton("vp_data_all", label = "Download All Plot Data",
-                   style='padding:6px; width:100%')
-  }
-})
-
-# Creates the vp_plot data download button for top datapoints.
-output$vp_dwnld_top <- renderUI({
-  if (input$tabset == "vp_plot") {
-    downloadButton("vp_data_top", label = "Download Plot Data for Search Bar Entries", 
-                   style='padding:6px; width:100%')
-  }
-})
 
 # Creates a slider that lets the user choose which comparison they want to view for the volcano plot. 
 output$vp_slider <- renderUI({
@@ -91,31 +79,27 @@ output$vp_slider <- renderUI({
 
 ##### Scatter plot reactive UI #####
 
-# Creates a button which activates the pop-up for defining the axes. 
-output$define_axis <- renderUI({
+# Create the set of UI inputs which appear when a user switches to the scatter plot tab.  
+output$sc_sidebar <- renderUI({
   if (input$tabset == "sc_plot") {
     tagList(
       h5("Choose axes comparisons"),
-      actionButton("define_axis", label = "Define Axes", style='padding:6px; font-size:90%')
+      actionButton("define_axis", label = "Define Axes", style='padding:6px; font-size:90%'),
+      numericInput("sc_top", label = h5("Label top genes/proteins"), value = glob_sc_top, max = 100, step = 1),
+      materialSwitch("sig_label2", label = "Label all genes/proteins outside cutoffs", right = TRUE, status = "info"),
+      actionButton("sc_top_bttn", label = "Add labelled entries to search bar.", style='padding:6px; font-size:90%'),
+      sliderInput("quant_num", label = h5("Quantile Percentage"), min = 0, 
+                  max = 25, value = glob_quant_num, step = 0.5),
+      h6(""),
+      downloadBttn("sc_data_all", label = "Download All Plot Data", style='simple', size = "sm", block = TRUE),
+      h6(""),
+      downloadBttn("sc_data_top", label = "Download Plot Data for Search Bar Entries", style='simple', size = "sm", block = TRUE)
     )
   }
 })
 
-# Creates a button which allows the user to add the genes/proteins with the largest difference 
-# in log fold change to the gene/protein search bar. 
-output$sc_top_bttn <- renderUI({
-  if (input$tabset == "sc_plot") {
-    actionButton("sc_top_bttn", label = "Add top entries to search bar.", style='padding:6px; font-size:90%')
-  }
-})
-
-# Creates a numeric input that lets the user choose the quantile size. 
-output$quant_num <- renderUI({
-  if (input$tabset == "sc_plot") {
-    sliderInput("quant_num", label = h5("Quantile Percentage"), min = 0, 
-                max = 25, value = glob_quant_num, step = 0.5)
-  }
-})
+# Add the inputs to global variables whenever they are changed so that they stay constant when switching tabs. 
+observeEvent(sc_top(), {glob_sc_top <<- sc_top()})
 observeEvent(input$quant_num, {glob_quant_num <<- input$quant_num})
 
 # Creates a slider which lets the user choose the comparison of log fold changes they want to view.
@@ -126,31 +110,22 @@ output$sc_slider <- renderUI({
                   width = paste(input$width_sc, "px", sep = ""))
 })
 
-# I do not know what this does but without it the program breaks. 
-observeEvent(values$data, {
-  updateSliderTextInput(session = session, inputId = "sc_slider", choices = c("bam"), selected = "bam")
-})
-
-# Creates the sc_plot data download button for all plot data
-output$sc_dwnld_all <- renderUI({
-  if (input$tabset == "sc_plot") {
-    downloadButton("sc_data_all", label = "Download All Plot Data", style='padding:6px; width:100%')
-  }
-})
-
-# Creates the sc_plot data download button for just search bar entries. 
-output$sc_dwnld_top <- renderUI({
-  if (input$tabset == "sc_plot") {
-    downloadButton("sc_data_top", label = "Download Plot Data for Search Bar Entries",
-                   style='padding:6px; width:100%')
-  }
-})
-
 ##### Heat map reactive UI #####
 
-output$heading <- renderUI(if (input$tabset == "heatmap") {h5("Color Bar Options")})
+# Creates input for altering the comparisons shown on the heatmap. 
+output$heat_sidebar1  <- renderUI({
+  comparisons = values$data
+  if (is.null(glob_heat_comps)) {glob_heat_comps <<- names(comparisons)}
+  if (input$tabset == "heatmap") {
+    tagList(
+      checkboxGroupInput(inputId = "heat_comps", label = h5("Comparisons"), choices = names(comparisons),
+                         selected = glob_heat_comps, inline = TRUE),
+      h5("Color Bar Customization"), 
+    )
+  }
+})
 
-# Create two inputs for controlling the type of colourbar. 
+# Create two inputs for controlling the type of color bar. 
 output$color_type  <- renderUI({
   if (input$tabset == "heatmap") {
     selectInput("color_type", label = "Type", choices = c("Diverging", "Sequential"),
@@ -160,74 +135,90 @@ output$color_type  <- renderUI({
 output$color_choice  <- renderUI({
   req(input$color_type)
   if (input$tabset == "heatmap") {
-    all = RColorBrewer::brewer.pal.info
     if (input$color_type == "Diverging") {
-      choices = rownames(all[all$category == "div",])
+      choices = div_list
     } else if (input$color_type == "Sequential") {
-      choices = rownames(all[all$category == "seq",])
+      choices = seq_list
     }
     selectInput("color_choice", label = "Color Choice", choices = choices,
                 selected = "RdBu")
   }
 })
 
-# Creates a numeric input that lets the user choose the range for the color bar
-output$heat_num <- renderUI({
+# materialSwitch("reverse_scale", "Flip Color Bar", value = TRUE, right = TRUE, status = "info"),
+# h5("Color Bar Range"),
+
+output$heat_sidebar2 <- renderUI({
+  if (input$tabset == "heatmap") {
+    tagList(
+      materialSwitch("reverse_scale", "Flip Color Bar", value = TRUE, right = TRUE, status = "info"),
+      h5("Color Bar Range"),
+      radioButtons("heat_lims", label = NULL, choices = c("Auto Limits", "Manual Limits"),
+                   selected = "Auto Limits", inline = TRUE)
+    )
+  }
+})
+
+output$heat_min <- renderUI({
+  req(input$heat_lims)
+  if (input$tabset == "heatmap" & input$heat_lims == "Manual Limits") {
+    numericInput("heat_min", label = "min", value = -3, step = 0.1)
+  }
+})
+
+output$heat_max <- renderUI({
+  req(input$heat_lims)
+  if (input$tabset == "heatmap" & input$heat_lims == "Manual Limits") {
+    numericInput("heat_max", label = "max", value = 3, step = 0.1)
+  }
+})
+
+# Additional UI inputs that control the color bar, sort the heatmap, and download the heatmap data. 
+output$heat_sidebar3 <- renderUI({
+  
+  # Set requirements. 
+  req(input$color_type, name_search_b(), input$heat_lims)
+  
+  # Load necessary data
   bound = bound()
   name_search = name_search_b()
   bound = subset(bound, full_name %in% name_search)
-  req(bound, input$color_type)
+  
   if (input$tabset == "heatmap") {
-    if (input$color_type == "Diverging") {
-      min = -1*abs_max(bound$log2_FC)
-      max = abs_max(bound$log2_FC)
-      if (length(glob_heat_num) < 2) {glob_heat_num = c(min, max)}
-    } else if (input$color_type == "Sequential") {
-      min = min(bound$log2_FC)
-      max = max(bound$log2_FC)
+    
+    # Create the ranges. 
+    if (input$heat_lims == "Auto Limits"){
+      if (input$color_type == "Diverging") {
+        min = -1*abs_max(bound$log2_FC)
+        max = abs_max(bound$log2_FC)
+        if (length(glob_heat_num) < 2) {glob_heat_num = c(round_any(min, 0.1, floor), round_any(max, 0.1, ceiling))}
+      } else if (input$color_type == "Sequential") {
+        min = min(bound$log2_FC)
+        max = max(bound$log2_FC)
+        if (length(glob_heat_num) < 2) {glob_heat_num = c(round_any(min, 0.1, floor), round_any(max, 0.1, ceiling))}
+      }
+    } else if (input$heat_lims == "Manual Limits") {
+      req(input$heat_min, input$heat_max)
+      min = input$heat_min
+      max = input$heat_max
       if (length(glob_heat_num) < 2) {glob_heat_num = c(min, max)}
     }
-    sliderInput("heat_num", label = "Range", min = floor(min), 
-                 max = ceiling(max), value = glob_heat_num, step = 0.1)
-  }
-})
-observeEvent(input$heat_num, {glob_heat_num <<- input$heat_num})
 
-# Allow the user to reverse the colourbar at will. 
-output$reverse_scale <- renderUI({
-  if (input$tabset == "heatmap") {
-    checkboxInput("reverse_scale", "Flip Color Bar?", value = TRUE)
+    tagList(
+      sliderInput("heat_num", label = NULL, min = round_any(min, 0.1, floor), 
+                  max = round_any(max, 0.1, ceiling), value = glob_heat_num, step = 0.1),
+      numericInput("sort_by", label = h5("Sort by Nth column"), min = 0, 
+                   max = length(input$heat_comps), value = glob_sort_by, step = 1),
+      downloadBttn("hmap_data", label = "Download Plot Data", style='simple', size = "sm", block = TRUE)
+    )
   }
 })
 
-# Creates a set of checkboxes that allow the user to choose which comparisons are shown on the heatmap.
-output$heat_comps <- renderUI({
-  comparisons = values$data
-  if (is.null(glob_heat_comps)) {glob_heat_comps <<- names(comparisons)}
-  if (input$tabset == "heatmap") {
-    checkboxGroupInput(inputId = "heat_comps", label = h5("Comparisons"),
-                       choices = names(comparisons), selected = glob_heat_comps)
-  }
-})
+# Add the inputs to global variables whenever they are changed so that they stay constant when switching tabs.
 observeEvent(input$heat_comps, {glob_heat_comps <<- input$heat_comps})
 observeEvent(values$data, {glob_heat_comps <<- NULL})
-
-# Creates a numeric input that allows the user to choose which column the heatmap will sort itself by. 
-output$sort_by <- renderUI({
-  req(input$heat_comps)
-  if (input$tabset == "heatmap") {
-    numericInput("sort_by", label = h5("Sort by Nth column"), min = 0, 
-                 max = length(input$heat_comps), value = glob_sort_by, step = 1)
-  }
-})
+observeEvent(input$heat_num, {glob_heat_num <<- input$heat_num})
 observeEvent(input$sort_by, {glob_sort_by <<- input$sort_by})
-
-# Creates the heatmap data download button.
-output$hmap_dwnld_bttn <- renderUI({
-  if (input$tabset == "heatmap") {
-    downloadButton("hmap_data", label = "Download Plot Data", style='padding:6px; width:100%')
-  }
-})
 
 ##### Controlling the gene/protein search bar. #####
 
@@ -351,16 +342,16 @@ v_plot = reactive({
   comparisons = values$data
   vp_slider = input$vp_slider
   name_search = name_search_b()
-  req(comparisons, vp_slider, num(), input$label_options)
+  req(comparisons, vp_slider, input$label_options)
   if (is.null(name_search)) {name_search = c()}
-  if (!vp_slider %in% names(comparisons)) {return(NULL)}
+  if (!vp_slider %in% names(comparisons) | is.null(vp_top())) {return(NULL)}
 
-  plot = volcano_plot_app(comparisons[[vp_slider]], to_label = name_search, top = num(),
+  plot = volcano_plot_app(comparisons[[vp_slider]], to_label = name_search, top = vp_top(),
                           FC_range = c(-input$FC_slider, input$FC_slider), P_cutoff = input$P_slider,
                           mycolors = c(input$downreg, input$upreg, input$notsig, input$Additional1),
                           text_size = t_size_vp(), axes_text_size = atx_size_vp(),
                           axes_label_size = ati_size_vp(), point_sizes = c(np_size_vp(), sp_size_vp()),
-                          box_pad = box_pad_vp(), label_options = input$label_options)
+                          box_pad = box_pad_vp(), label_options = input$label_options, sig_label = input$sig_label)
 
   return(plot)
 })
@@ -442,7 +433,7 @@ sc_plot = reactive({
   in_common = in_common()
   sc_slider = input$sc_slider
   name_search = name_search_b()
-  req(sc_slider, num(), in_common)
+  req(sc_slider, in_common)
   if (is.null(name_search)) {name_search = c()}
   
   # Split what was chosen on the slider into two comparisons
@@ -454,12 +445,12 @@ sc_plot = reactive({
   quant_int = c(input$quant_num/100, (100 - input$quant_num)/100)
 
   # Make a scatter plot which includes lines showing a one-to-one ratio and 97.5% quantiles.
-  plot = one_to_one_app(in_common, comp1, comp2, to_label = name_search, top = num(),
+  plot = one_to_one_app(in_common, comp1, comp2, to_label = name_search, top = sc_top(),
                         quant_int = quant_int, line_color = "blue", int_color = "red",
                         text_size = t_size_sc(), point_size = p_size_sc(),
                         mycolors = c(input$withquant, input$blwquant, input$abvquant, input$Additional2),
                         axes_text_size = atx_size_sc(), axes_label_size = ati_size_sc(),
-                        box_pad = box_pad_sc(), label_options = input$label_options)
+                        box_pad = box_pad_sc(), label_options = input$label_options, sig_label = input$sig_label2)
   
   return(plot)
 })
@@ -692,9 +683,9 @@ output$hmap_data = downloadHandler(
 
 ##### Plot Download #####
 output$vp_plt_dwnld = renderUI(div(style = paste("position:relative;left:", input$width_vp, "px;height:2px", sep = ""),
-                                   downloadButton("download_vp", label = "", icon = icon("camera", lib = "glyphicon"),
+                                   downloadButton("download_vp", label = NULL, icon = icon("camera", lib = "glyphicon"),
                                                   style='padding:4px; font-size:120%')))
 
 output$sc_plt_dwnld = renderUI(div(style = paste("position:relative;left:", input$width_sc, "px;height:2px", sep = ""),
-                                   downloadButton("download_sc", label = "", icon = icon("camera", lib = "glyphicon"),
+                                   downloadButton("download_sc", label = NULL, icon = icon("camera", lib = "glyphicon"),
                                                   style='padding:4px; font-size:120%')))

@@ -13,7 +13,7 @@
 #######################################################################
 
 compare_CyberT = function(dataframes, controls, treatments, analysis = NULL,
-                          apo_name = NULL, no_conf = FALSE) {
+                          apo_name = NULL, no_conf = FALSE, var_norm = "vsn") {
   
   # For each dataframe, convert all column names to sentence case
   for (i in 1:length(dataframes)) {
@@ -111,8 +111,12 @@ compare_CyberT = function(dataframes, controls, treatments, analysis = NULL,
     input = subset(df, select = c("full_name", colnames(df)[stringr::str_detect(colnames(df), "Rep")]))
     input = tibble::column_to_rownames(input, var = "full_name")
     
-    # Apply a VSN Transformation
-    input = runVsn(input)
+    # Apply a normalization
+    if (var_norm == "vsn") {
+      input = runVsn(input)
+    } else if (var_norm == "logT") {
+      input = log2(input)
+    }
   
     # Run CyberT.
     results = bayesT(input, length(cont_locs), length(treat_locs), bayes = TRUE, winSize = winSize,
@@ -172,7 +176,8 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
                              mycolors = c("blue", "red", "black", "green"), text_size = 3,
                              axes_text_size = 2, axes_label_size = 3,  point_sizes = c(1, 2),
                              range = NULL, box_pad = 0.3, point_pad = 0.2, 
-                             label_options = c("Name", "P_site", "Identifier")) {
+                             label_options = c("Name", "P_site", "Identifier"),
+                             sig_label = FALSE) {
   
   # Remove infinite and NA values. 
   data = data[is.finite(rowSums(data[colnames(data) == "log2_FC" | colnames(data) == "log_p"])),]
@@ -181,13 +186,16 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
   data$label_form = do.call(paste, c(data[label_options], sep=" "))
   
   # prevent the function from breaking in the presence of null values for top
-  if (is.null(top) | is.na(top) | is.nan(top)) {top = 0}
+  if (is.na(top)) {top = 0}
   
   # Create a column which specifies if something is above our cutoffs or of special interest.  
   data$reg = "Non-significant"
   data$reg[data$log2_FC > FC_range[2] & data$log_p > P_cutoff] = "Up-regulated"
   data$reg[data$log2_FC < FC_range[1] & data$log_p > P_cutoff] = "Down-regulated"
   data$reg[data$full_name %in% to_label] = "Additional"
+  
+  # If sig labels is true, then make top equal to the number of significant genes/proteins
+  if (sig_label) {top = length(data$reg[data$reg == "Up-regulated"]) + length(data$reg[data$reg == "Down-regulated"])}
   
   # Specify the colors the correspond to up, down, not significant, and additional to be labeled. 
   names(mycolors) = c("Down-regulated", "Up-regulated", "Non-significant", "Additional")
@@ -204,6 +212,9 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
     top_reg = data[is.na(data$dist) == F,][1:top,]$full_name
     data$delabel[data$full_name %in% top_reg] = data$label_form[data$full_name %in% top_reg] 
   } else {top_reg = c()}
+  
+  # Check to see if the maximum labels have been overcome. 
+  if ((length(unique(c(to_label, top_reg))) > 150)) {stop("Exceeded maximum number of labels (150)")}
   
   # See if there are any dupliate labels and add identifier to fix them. 
   dupl_loc = duplicated(data$delabel, incomparables=NA) | duplicated(data$delabel, fromLast = T, incomparables=NA)
@@ -283,7 +294,7 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
 one_to_one_app = function (data, comp1, comp2, to_label = c(), top = 0, quant_int = c(0.01, 0.99),
                            line_color = "blue", int_color = "red", text_size = 2.3,  point_size = 1,
                            axes_text_size = 2, axes_label_size = 3, box_pad = 0.3, point_pad = 0.2,
-                           mycolors = c("black", "black", "black", "green"),
+                           mycolors = c("black", "black", "black", "green"), sig_label = FALSE,
                            label_options = c("Name", "P_site", "Identifier")) {
   
   # Ensure that only valid names are used. 
@@ -312,6 +323,10 @@ one_to_one_app = function (data, comp1, comp2, to_label = c(), top = 0, quant_in
   data$reg[data$diff < quants[1]] = "below-quants"
   data$reg[data$full_name %in% to_label] = "Additional"
   
+  # If sig labels is true, then make top equal to the number of significant genes/proteins
+  if (sig_label) {top = length(data$reg[data$reg == "above-quants"]) + length(data$reg[data$reg == "below-quants"])}
+  
+  
   # Specify the colors the correspond to within quants, outside quants, and of special interest.
   names(mycolors) = c("within-quants", "above-quants", "below-quants", "Additional")
   
@@ -323,6 +338,9 @@ one_to_one_app = function (data, comp1, comp2, to_label = c(), top = 0, quant_in
     top_reg = data[is.na(data$diff2) == F,][1:top,]$full_name
     data$delabel[data$full_name %in% top_reg] = data$label_form[data$full_name %in% top_reg]
   } else {top_reg = c()}
+  
+  # Check to see if the maximum labels have been overcome. 
+  if ((length(unique(c(to_label, top_reg))) > 150)) {stop("Error: Exceeded maximum number of labels (150)")}
   
   # Add the labels from to_label.  
   data$delabel[data$full_name %in% to_label] = data$label_form[data$full_name %in% to_label]
@@ -554,3 +572,9 @@ clean_kinexus = function(path, col_names_row = 53, max_error = 50) {
   
   return(df)
 }
+
+#######################################################################
+## abs_max. A helper function which allows for significantly more flexible rounding. 
+#######################################################################
+round_any = function(x, accuracy, f=round){f(x/ accuracy) * accuracy}
+

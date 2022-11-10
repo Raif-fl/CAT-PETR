@@ -11,34 +11,17 @@ analysis_tab <-
                           tags$style(HTML("input[type=\"number\"] {height: 35px;}"))
                           ),
                 
-              # Requires upper placement. 
+              # Main sidebar options
               uiOutput("label_options"),
-              uiOutput("define_axis"),
-              uiOutput("num"),
-              uiOutput("vp_top_bttn"),
-              uiOutput("sc_top_bttn"),
+              uiOutput("sc_sidebar"),
+              uiOutput("vp_sidebar"),
               
-              # Heatmap UI
-              uiOutput("heat_comps"),
-              uiOutput("heading"),
+              # Heatmap specific options. 
+              uiOutput("heat_sidebar1"),
               fluidRow(column(6, uiOutput("color_type")), column(6, uiOutput("color_choice"))),
-              uiOutput("heat_num"),
-              uiOutput("reverse_scale"),
-              uiOutput("sort_by"),
-              uiOutput("hmap_dwnld_bttn"),
-
-              # middle placement. 
-              uiOutput("quant_num"),
-              uiOutput("P_slider"),
-              uiOutput("FC_slider"),
-              
-              # Requires lower placement.
-              br(),
-              uiOutput("sc_dwnld_all"),
-              uiOutput("vp_dwnld_all"),
-              br(.noWS = "before"),
-              uiOutput("sc_dwnld_top"),
-              uiOutput("vp_dwnld_top")
+              uiOutput("heat_sidebar2"),
+              fluidRow(column(6, uiOutput("heat_min")), column(6, uiOutput("heat_max"))),
+              uiOutput("heat_sidebar3")
               ),
               
               # Control the main panel layout. 
