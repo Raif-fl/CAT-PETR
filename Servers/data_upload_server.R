@@ -8,19 +8,19 @@ compModal <- function(failed = FALSE) {
   modalDialog(uiOutput("comp_choice"), 
               hr(),
               h6("Normalization Technique"),
-              fluidRow(column(4, radioButtons("var_norm", label = "",
-                                              choices = list("None" = "none",
-                                                             "Log Transformation" = "logT",
-                                                             "VSN" = "vsn"),
+              fluidRow(column(3, radioButtons("var_norm", label = "",
+                                              choices = list("VSN" = "vsn",
+                                                             "Log Transform" = "logT",
+                                                             "None" = "none"),
                                               selected = "vsn", width = "200%")),
-                       column(8, uiOutput("vsn_link"))),
+                       column(9, uiOutput("vsn_link"))),
               hr(),
-              h6("Use Cyber-T t-statistic?"),
-              fluidRow(column(4, radioButtons("no_conf", label = "",
-                                              choices = list("Use Cyber-T t-test" = FALSE,
-                                                             "Use traditional t-test" = TRUE),
+              h6("t-test options"),
+              fluidRow(column(3, radioButtons("no_conf", label = "",
+                                              choices = list("Cyber-T" = FALSE,
+                                                             "Traditional" = TRUE),
                                               selected = FALSE, width = "200%")),
-                       column(8, uiOutput("cyber_link"))),
+                       column(9, uiOutput("cyber_link"))),
               if (failed)
                 div(tags$b("Pairwise comparison failed. Check that data is in a csv format and that 
                            there are an equal number of controls and treatments with no comparisons
@@ -137,17 +137,15 @@ output$apo_pho = renderUI({
 
 url1 <- a("VSN Reference", href="https://academic.oup.com/bioinformatics/article/19/8/966/235230")
 output$vsn_link <- renderUI({
-  tagList("It is recommended to minimize the mean-variance dependence of the data using normalization.
-          2 normalization methods are provided: log transformation and variance stabilization 
-          normalization (VSN). VSN is often preferable as it is able to handle values at or below zero.
-          For more information on VSN, please see:", url1)
+  tagList("Data normalization is reccomended. 2 normalization methods are provided: log transformation 
+          and variance stabilization normalization (VSN). VSN is often preferable as it is able to handle
+          values at or below zero. For more information on VSN, please see:", url1)
 })
 
 url2 <- a("Cyber-T Reference", href="https://pubmed.ncbi.nlm.nih.gov/22600740/")
 output$cyber_link <- renderUI({
   tagList("The Cyber-T method uses an empirical Bayesian variance estimate to adjust 
-  for low sample sizes and is recommended for runs with few 
-  or no biological replicates. For more information please see:", url2)
+  for low sample sizes. For more information please see:", url2)
 })
 
 # A button that begins the cleaning process for the raw kinexus files. 

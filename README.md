@@ -4,7 +4,7 @@ CAT PETR (Convenient Analysis Tool for Phosphorylation and Expression Testing in
 
 # Installation
 
-CAT PETR has been developed in R 4.2.1 and Shiny 1.7.2 and uses a wide variety of different packages. For ease of use, CAT PETR is provided as web application using shinyapps.io servers. This web application can be accessed using this link: \_\_\_\_. If you wish to run CAT PETR on your local computer, you will first need to Install R and R studio using the instructions from this link <https://www.r-project.org/> and this link <https://www.rstudio.com/products/rstudio/download/> respectively. Then, download or clone this GitHub repository using the green 'code' button at the top of the repository. Now, open and run the 'Install_Dependencies.R' file in Rstudio. After the dependencies are done installing, open up the app.R file and run the app by hitting the Run App button in Rstudio or by running the shiny::runApp() command. This should open up the app on your personal computer.
+CAT PETR has been developed in R 4.2.1 and Shiny 1.7.2 and uses a wide variety of different packages. For ease of use, CAT PETR is provided as web application using shinyapps.io servers. This web application can be accessed using this link: <https://keegan-flanagan.shinyapps.io/CAT-PETR/> If you wish to run CAT PETR on your local computer, you will first need to Install R and R studio using the instructions from this link <https://www.r-project.org/> and this link <https://www.rstudio.com/products/rstudio/download/> respectively. Then, download or clone this GitHub repository using the green 'code' button at the top of the repository. Now, open and run the 'Install_Dependencies.R' file in Rstudio. After the dependencies are done installing, open up the app.R file and run the app by hitting the Run App button in Rstudio or by running the shiny::runApp() command. This should open up the app on your personal computer.
 
 # Tutorial
 
@@ -32,7 +32,7 @@ This is a simple tutorial that covers the data upload and visualization sections
 
     ![](www/bucket_list.png)
 
-    Once the controls and treatments are selected, the user must choose between conducting a traditional two-sample t-test and an adjusted Cyber-T t-test. For more information on Cyber-T, please see the [Cyber-T Reference](https://pubmed.ncbi.nlm.nih.gov/22600740/).
+    Once the controls and treatments are selected, the user must choose the style of data normalization they wish to use (if any) and choose which type of t-test to perform. The t-test options include a traditional two-sample t-test and an adjusted Cyber-T t-test. For more information on Cyber-T, please see the [Cyber-T Reference](https://pubmed.ncbi.nlm.nih.gov/22600740/).
 
 6.  Please select the Cyber-T t-test and then hit the 'run pairwise comparisons' button. The comparison should be completed in under 30 seconds. Once completed, we can move on to the next section of the tutorial.
 
@@ -46,7 +46,7 @@ The visualization tab contains three sub-tabs: the Volcano Plot tab, the Scatter
 
     ![](www/Volcano_plot.png)
 
-    Generally speaking, All three of the visualization sub tabs can be broken into three sections: (1) A sidepanel with various inputs that alter the plot parameters and buttons to download the plot data. (2) an appearance drop down menu which allows for superficial alterations to the appearance of the plots. (3) A main panel which contains the plot itself and a gene/protein search bar that allows for specific genes to be labelled on the plot.
+    Generally speaking, All three of the visualization sub tabs can be broken into three sections: (1) A side-panel with various inputs that alter the plot parameters and buttons to download the plot data. (2) an appearance drop down menu which allows for superficial alterations to the appearance of the plots. (3) A main panel which contains the plot itself and a gene/protein search bar that allows for specific genes to be labelled on the plot.
 
 8.  Use the sidebar to alter the parameters of the volcano plot in the following ways:
 
@@ -58,12 +58,13 @@ The visualization tab contains three sub-tabs: the Volcano Plot tab, the Scatter
 
     1.  Increase the size of the plot to 760 width by 590 height.
     2.  Increase the label text size to 5.
+    3.  Change the color of the searchbar points.
 
 10. Highlight specific genes/proteins using the protein search bar in the following ways:
 
     1.  Begin typing the protein name 'PKCg T655 PK083' into the search bar and then select it from the resulting drop down menu. Note that the protein becomes labelled in green on the plot. Select 'PKCg T655 PK083' on the search bar by clicking on it and then remove it using the delete key.
     2.  Click on any random point on the graph to add it to the search bar and generate a label. Then click on the point again to remove it.
-    3.  Click the 'add top entries to search bar' button. Note that the color of the labels have all switched to green.
+    3.  Click the 'add top entries to search bar' button. Note that the color of the labels have all switched to the color we specified in step 9.
 
 11. Switch to the 'C_vs_T\_SIV' plot using the slider directly underneath the plot.
 
@@ -102,8 +103,9 @@ The Heatmap sub tab is unique in that the contents of the plot are entirely depe
 20. Use the sidebar to alter the parameters of the heatmap in the following ways:
 
     1.  Remove the 'T_TEB_vs_T\_TEL' comparison from the heatmap by un-checking it.
-    2.  Adjust the colorbar range to 7 so that we can better see the differences between the highest values.
-    3.  Enter 1 into the 'sort by nth column' area to sort the heatmap by the first column.
+    2.  Change the color bar color choice to "Red Yellow Blue".
+    3.  Adjust the colorbar range to -7 and 7.
+    4.  Enter 1 into the 'sort by nth column' input to sort the heatmap by the first column.
 
 21. Use the appearance option menu to alter the appearance of the volcano plot in the following ways:
 
