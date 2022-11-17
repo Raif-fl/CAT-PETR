@@ -6,7 +6,7 @@ data_upload_tab <-
                                actionButton("format_info", label = "  ", icon = icon("question"), 
                                             style='padding:1px; font-size:80%', width = "28px"))),
                radioButtons("data_type", label = "",
-                            choices = c("un-processed", "pre-processed", "Kinexus(KAM-1325)")),
+                            choices = list("User Data" = "ud", "CAT PETR Data" = "cpd", "Kinexus Data" = "kd")),
                fileInput("upload", NULL, label = h5("Upload data"), multiple = TRUE),
                uiOutput("max_error"),
                uiOutput("start_clean"),

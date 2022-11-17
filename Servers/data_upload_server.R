@@ -39,8 +39,8 @@ observeEvent(input$compare, {
 output$comp_choice = renderUI({
   
   # Load in the uploaded data files. 
-  if (input$data_type == "un-processed") {infile = input$upload}
-  else if (input$data_type == "Kinexus(KAM-1325)") {infile = kinexus_data}
+  if (input$data_type == "ud") {infile = input$upload}
+  else if (input$data_type == "kd") {infile = kinexus_data}
   
   # Get the names of the input files. 
   names = str_remove(infile$name, ".csv")
@@ -93,22 +93,22 @@ output$no_conf = renderUI({
 
 # A button that brings up the comparison selection bucket list. 
 output$compare = renderUI({
-  if(is.null(input$upload) | input$data_type == "pre-processed") {return(NULL)}
-  if (input$data_type == "Kinexus(KAM-1325)" & is.null(kinexus_data$data)) {return(NULL)}
+  if(is.null(input$upload) | input$data_type == "cpd") {return(NULL)}
+  if (input$data_type == "kd" & is.null(kinexus_data$data)) {return(NULL)}
     actionButton("compare", "Choose Comparisons")
 })
 
 # Create the input for the name of all pan-specific data. 
 output$apo_name = renderUI({  
   req(input$upload)
-  if (input$data_type == "pre-processed") {return(NULL)}
-  if (input$data_type == "un-processed") {
+  if (input$data_type == "cpd") {return(NULL)}
+  if (input$data_type == "ud") {
     # Check if the inputs include P-sites. 
     infile = input$upload 
     df = read.table(infile$datapath[1], head = TRUE, nrows = 1, sep = ",")
     if (!"P_site" %in% str_to_sentence(colnames(df))) {return(NULL)}
   }
-  if (input$data_type == "Kinexus(KAM-1325)") {
+  if (input$data_type == "kd") {
     if (is.null(kinexus_data$data)) {return(NULL)}
   }
   
@@ -119,14 +119,14 @@ output$apo_name = renderUI({
 # Create the input for deciding if the analysis will be using pan-specific or phospho-specific data. 
 output$apo_pho = renderUI({  
   req(input$upload)
-    if (input$data_type == "pre-processed") {return(NULL)}
-    if (input$data_type == "un-processed") {
+    if (input$data_type == "cpd") {return(NULL)}
+    if (input$data_type == "ud") {
       # Check if the inputs include P-sites. 
       infile = input$upload 
       df = read.table(infile$datapath[1], head = TRUE, nrows = 1, sep = ",")
       if (!"P_site" %in% str_to_sentence(colnames(df))) {return(NULL)}
     }
-    if (input$data_type == "Kinexus(KAM-1325)") {
+    if (input$data_type == "kd") {
       if (is.null(kinexus_data$data)) {return(NULL)}
     }
   
@@ -151,14 +151,14 @@ output$cyber_link <- renderUI({
 # A button that begins the cleaning process for the raw kinexus files. 
 output$start_clean = renderUI({
   req(input$upload)
-  if (input$data_type == "Kinexus(KAM-1325)" & is.null(kinexus_data$data)) {
+  if (input$data_type == "kd" & is.null(kinexus_data$data)) {
     actionButton("start_clean", "Clean Raw Kinexus Files")} else (return(NULL))
 })
 
 # A slider that allows the user to select the cutoff for disagreement between technical replicates. 
 output$max_error = renderUI({
   req(input$upload)
-  if (input$data_type == "Kinexus(KAM-1325)" & is.null(kinexus_data$data)) {
+  if (input$data_type == "kd" & is.null(kinexus_data$data)) {
     sliderInput("max_error",label ="Cutoff for percent error between technical replicates",
                 min = 0, max = 200, value = 50)} else (return(NULL))
 })
@@ -240,11 +240,11 @@ values$data = readRDS("example.Rdata")
 run_cybert = eventReactive(input$process,  {
   
   # Load in the data.
-  if (input$data_type == "un-processed") {
+  if (input$data_type == "ud") {
     infile = input$upload
     dataframes = map(infile$datapath, read_csv, col_types = cols())
     names(dataframes) = str_remove(infile$name, ".csv")
-    } else if (input$data_type == "Kinexus(KAM-1325)") {dataframes = kinexus_data$data}
+    } else if (input$data_type == "kd") {dataframes = kinexus_data$data}
 
   # Create token IDs.
   token$id <- c(token$id, UUIDgenerate())
@@ -362,7 +362,7 @@ observeEvent(input$clear, {
 # If pre-process data is uploaded, directly load it into the reactive values. 
 observeEvent(input$upload,  {
   
-  if (!input$data_type == "pre-processed") {return(NULL)}
+  if (!input$data_type == "cpd") {return(NULL)}
   
   # Define the initial data upload
   infile = input$upload

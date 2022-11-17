@@ -477,7 +477,6 @@ output$scatter_plot = renderUI({
   req(sc_plot)
   sc_plot = sc_plot()[[1]]
   output$sc_plot = renderPlot(sc_plot, height = input$height_sc, width = input$width_sc)
-  output$sc_plot = renderPlot(sc_plot, height = input$height_sc, width = input$width_sc)
   plotOutput("sc_plot", click = "plot_click_sc", height = paste(input$height_sc, "px", sep = ""),
              width = paste(input$width_sc, "px", sep = ""))
 })

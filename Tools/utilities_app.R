@@ -115,7 +115,7 @@ compare_CyberT = function(dataframes, controls, treatments, analysis = NULL,
     if (var_norm == "vsn") {
       input = runVsn(input)
     } else if (var_norm == "logT") {
-      input = log2(input)
+      input = log(input)
     }
   
     # Run CyberT.
