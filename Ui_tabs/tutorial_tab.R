@@ -222,7 +222,7 @@ tutorial_tab <-
                    tags$li("Use the sidebar to alter the parameters of the heatmap in the following ways:",
                            tags$ol(
                              
-                             tags$li("Remove the 'T_TEB_vs_T\_TEL' comparison from the heatmap by 
+                             tags$li("Remove the 'T_TEB_vs_T_TEL' comparison from the heatmap by 
                                      un-checking it."),
                              tags$li("Change the color bar color choice to 'Red Yellow Blue'."),
                              tags$li("Adjust the colorbar range to -7 and 7."),
