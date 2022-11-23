@@ -13,6 +13,8 @@ library(vroom)
 library(DT) 
 library(stringr) 
 library(colourpicker)
+library(vsn)
+library(multtest)
 
 # Source the tools and tabs. 
 source('Tools/utilities_app.R', local = TRUE)

@@ -184,7 +184,7 @@ runVsn <- function(data, ...){
   suppressMessages(require(vsn))
   #cat('data in VSN: \n', colnames(data), '\n', as.vector(unlist(data[1,])), '\n',
   #    as.vector(unlist(data[2,])), '\n', as.vector(unlist(data[3, ])), '\n');
-  tryCatch(data.frame(justvsn(as.matrix(data), verbose=FALSE, minDataPointsPerStratum=10, ...)),
+  tryCatch(data.frame(vsn::justvsn(as.matrix(data), verbose=FALSE, minDataPointsPerStratum=10, ...)),
            error=function(e){
              libs_a<-.libPaths()
              writeError('Error in running vsn.  Possible collinearity.  Check your data.')
@@ -199,7 +199,7 @@ runVsn <- function(data, ...){
 runMulttest <- function(pvals){
   .libPaths("/home/baldig/shared_libraries/centos64/pkgs/R/2.15.1_fix/lib64/R/library")
   suppressMessages(require(multtest));
-  adjPObj <- mt.rawp2adjp(pvals, proc=c("Bonferroni", "BH"))
+  adjPObj <- multtest::mt.rawp2adjp(pvals, proc=c("Bonferroni", "BH"))
   ##Bind them, last two cols of adjp list in original order
   adjPObj$adjp[order(adjPObj$index), -1]
 }

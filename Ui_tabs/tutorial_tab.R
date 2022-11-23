@@ -25,7 +25,7 @@ tutorial_tab <-
           fluidRow(
             column(10, h1("Tutorial"),
                 "This is a simple tutorial that covers the data upload and visualization sections of CAT PETR 
-                when working with un-processed protein phosphorylation data. The example data used is antibody
+                when working with protein phosphorylation data. The example data used is antibody
                 microarray data collected from biopsied pancreatic cells from patients who underwent 5 
                 different drug treatments: No treatment (C), treatment with B-IT (T_BIT), treatment with 
                 Sivelestat (T_SIV), treatment with Tebipenum (T_TEB), and treatment with Telaprevir (T_TEL). "
@@ -39,22 +39,22 @@ tutorial_tab <-
                      start = 1,
                      tags$li("The example data for this tutorial can be found on the CAT PETR OSF page", 
                      tags$a(href="https://osf.io/qmd8e/.", "https://osf.io/qmd8e/."), "Please save the 
-                     data from the un_processed folder onto your computer in its own folder."), 
+                     data from the example user data folder onto your computer in its own folder."), 
                    br(),
                      tags$li("Go to the 'Data Upload' tab. The appearance of this tab is shown below."), 
                    br(),
                    img(src = "download_plain.png", height = "auto", width = "100%"),
                    br(),
-                     "(1) Selection boxes specifying if uploading un-processed data, pre-processed data,
+                     "(1) Selection boxes specifying if uploading un-analyzed user data, pre-analyzed CAT PETR data,
                      or the raw data files from a Kinexus KAM-1325 microarray. Question mark brings up
                      example input formats. (2) Data upload section. (3) Button which downloads 
-                     processed data as a .zip file. (4) Console log which displays the analysis progress
+                     analyzed data as a .zip file. (4) Console log which displays the analysis progress
                      along with warnings, errors, and messages. (5) Button which clears the console log.
                      (6) Button which cancels any active analysis processes.",
                    br(),
                    br(),
-                     tags$li("Choose the 'un-processed' option for the data upload type. Then, 
-                    click on the browse button and navigate to wherever you have saved the un-processed 
+                     tags$li("Choose the 'User Data' option for the data upload type. Then, 
+                    click on the browse button and navigate to wherever you have saved the example 
                     data. Note that each data file will represent a single sample/treatment group. Use 
                     the shift key to select all of the csv files and upload."),
                    br(),
@@ -70,6 +70,7 @@ tutorial_tab <-
                      inputs as the defaults.", 
                    br(),
                    br(),
+                   # should be a needed change here. 
                      "The last new input is the 'choose comparisons' button which will be used to decide
                      which of our samples we want to statistically compare to each other. Click this 
                      button and move on to the next step.",
@@ -83,9 +84,13 @@ tutorial_tab <-
                    br(),
                    img(src = "bucket_list.png", height = "auto", width = "70%"),
                    br(),
-                     tags$li("Once the controls and treatments are selected, the user must choose between 
-                    conducting a traditional two-sample t-test and an adjusted Cyber-T t-test. For more 
-                    information on Cyber-T, please see the Cyber-T Reference.", 
+                     tags$li("Once the controls and treatments are selected, the user must the choose
+                     normalization and t-test methods for the differential analysis. The normalization
+                     techniques offered include Log Transformation and VSN. Please select VSN and
+                     Cyber-T and then hit the 'run pairwise comparisons' button. The comparison 
+                     should be completed in under 30 seconds. Once completed, we can move on to the 
+                     next section of the tutorial. For more information on VSN and Cyber-T, please see 
+                     the VSN Reference and the Cyber-T Reference respectively.",
                     br(),
                     br(),
                     "Please select the Cyber-T t-test and then hit the 'run pairwise comparisons' button. 
@@ -132,7 +137,8 @@ tutorial_tab <-
                            following ways:",
                            tags$ol(
                              tags$li("Increase the size of the plot to 760 width by 590 height."),
-                             tags$li("Increase the label text size to 5.")
+                             tags$li("Increase the label text size to 5."),
+                             tags$li("Change the color of the searchbar points.")
                            )),
                    br(),
                    tags$li("Highlight specific genes/proteins using the protein search bar in the following ways:",
@@ -143,8 +149,8 @@ tutorial_tab <-
                                      by clicking on it and then remove it using the delete key."),
                              tags$li("Click on any random point on the graph to add it to the search bar and 
                                      generate a label. Then click on the point again to remove it."),
-                             tags$li("Click the 'add top entries to search bar' button. Note that the color of
-                                     the labels have all switched to green.")
+                             tags$li("Click the 'add labelled entries to search bar' button. Note that the color of
+                                     the labels have all switched to the color we specified in step 9.")
                            )),
                    br(),
                    tags$li("Switch to the 'C_vs_T_SIV' plot using the slider directly underneath the plot."),
@@ -191,7 +197,7 @@ tutorial_tab <-
                    br(),
                    tags$li("Hit the deselect all button below the gene/protein searchbar in order to clear it."),
                    br(),
-                   tags$li("Click the 'add top entries to search bar' button.")
+                   tags$li("Click the 'add labelled entries to search bar' button.")
                    
             )
           )),
@@ -215,11 +221,13 @@ tutorial_tab <-
                    br(),
                    tags$li("Use the sidebar to alter the parameters of the heatmap in the following ways:",
                            tags$ol(
-                             tags$li("Remove the 'T_TEB_vs_T_TEL' comparison from the heatmap by un-checking it."),
-                             tags$li("Adjust the colorbar range to 7 so that we can better see the differences
-                                     between the highest values."),
-                             tags$li("Enter 1 into the 'sort by nth column' area to sort the heatmap by the
-                                     first column.")
+                             
+                             tags$li("Remove the 'T_TEB_vs_T\_TEL' comparison from the heatmap by 
+                                     un-checking it."),
+                             tags$li("Change the color bar color choice to 'Red Yellow Blue'."),
+                             tags$li("Adjust the colorbar range to -7 and 7."),
+                             tags$li("Enter 1 into the 'sort by nth column' input to sort the
+                                     heatmap by the first column.")
                            )),
                    br(),
                    tags$li("Use the appearance option menu to alter the appearance of the volcano plot in the

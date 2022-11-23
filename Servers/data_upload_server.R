@@ -179,9 +179,9 @@ output$pre_pr_example <- renderDataTable(dt2)
 
 # Creates a popup that contains some example tables
 exModal <- function(failed = FALSE) {
-  modalDialog(h3("Example Un-Processed data"),
+  modalDialog(h3("Example User Data"),
               dataTableOutput("un_pr_example"),
-              h3("Example Pre-Processed data"),
+              h3("Example CAT PETR Data"),
               dataTableOutput("pre_pr_example"),
               span(""), size = "l",
               footer = tagList(modalButton("Close"))

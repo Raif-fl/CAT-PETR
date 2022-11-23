@@ -5,17 +5,21 @@ home_tab <-
     column(3, img(src = "CAT_PETR_Logo.png", height = "auto", width = "100%")
     ),
     column(5,
-      h4("Welcome to CAT PETR"),
+      h4("Welcome to CAT PETR (Development ver)"),
       "CAT PETR (Convenient Analysis Tool for Phosphorylation and Expression Testing in R) is an
       R shiny application that provides a user friendly interface for the statistical analysis
       and visualization of phosphorylation and/or expression data.",
       br(),
-      "Compatible with data collected via a variety of different methods such as DNA microarrays, 
-      antibody microarrays, mass spectrometry, and mRNA sequencing.",
+      "Originally designed for use with Kinexus KAM 1325 antibody microarray data, CAT PETR has been
+      expanded to allow for the analysis of data collected via a variety of techniques including
+      RNA sequencing, DNA microarray, and mass spectrometry. ",
       br(),
       "Includes options for traditional t-tests and tests that use empirical Bayesian variance
       estimates to adjust for low sample size. Following statistical analysis, users can explore 
-      their results via interactive volcano plots, scatterplots, and heatmaps."
+      their results via interactive volcano plots, scatterplots, and heatmaps.",
+      br(),
+      "(CAT PETR is still in development. We welcome any and all feedback and suggestions. Please 
+      direct comments to either kdd@math.ubc.ca or keeganfl@student.ubc.ca)"
     ),
     column(2)
   ),
