@@ -1,20 +1,5 @@
-library(tidyverse) 
-library(ggrepel) 
 library(shiny) 
-library(uuid)
-library(shinyWidgets) 
-library(sortable) 
-library(RColorBrewer) 
-library(purrr) 
-library(svglite)
-library(plotly) 
-library(glue) 
-library(vroom) 
-library(DT) 
-library(stringr) 
-library(colourpicker)
-library(vsn)
-library(multtest)
+library(magrittr)
 
 # Source the tools and tabs. 
 source('Tools/utilities_app.R', local = TRUE)
@@ -51,7 +36,7 @@ glob_heat_comps = NULL
 glob_sort_by = 0
 
 ##### Define UI logic #####
-ui = navbarPage("CAT PETR",
+ui = shiny::navbarPage("CAT PETR",
                 theme = bslib::bs_theme(bootswatch = "lux"),
                 id = "main_tab",
                 home_tab,
@@ -69,4 +54,4 @@ server <- function(input, output, session) {
 }
 
 # Run the app
-shinyApp(ui, server)
+shiny::shinyApp(ui, server)

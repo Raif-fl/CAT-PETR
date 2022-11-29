@@ -27,9 +27,9 @@ home_tab <-
   fluidRow(
     column(2),
     column(8, align = "center",
-           actionBttn("tut_switch", "View Tutorial", style = "jelly", color = "primary", size = "lg"),
-           actionBttn("data_switch", "Upload Your Own Data", style = "jelly", color = "primary", size = "lg"),
-           actionBttn("ex_switch", "Explore Example Dataset", style = "jelly", color = "primary", size = "lg")),
+           shinyWidgets::actionBttn("tut_switch", "View Tutorial", style = "jelly", color = "primary", size = "lg"),
+           shinyWidgets::actionBttn("data_switch", "Upload Your Own Data", style = "jelly", color = "primary", size = "lg"),
+           shinyWidgets::actionBttn("ex_switch", "Explore Example Dataset", style = "jelly", color = "primary", size = "lg")),
     column(2)
   ),
   fluidRow(column(2),

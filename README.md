@@ -32,7 +32,7 @@ This is a simple tutorial that covers the data upload and visualization sections
 
     ![](www/bucket_list.png)
 
-    Once the controls and treatments are selected, the user must the choose normalization and t-test methods for the differential analysis. The normalization techniques offered include Log Transformation and VSN. Please select VSN and Cyber-T and then hit the 'run pairwise comparisons' button. The comparison should be completed in under 30 seconds. Once completed, we can move on to the next section of the tutorial. For more information on VSN and Cyber-T, please see the [VSN Reference](https://academic.oup.com/bioinformatics/article/19/8/966/235230?login=true) and the [Cyber-T](https://pubmed.ncbi.nlm.nih.gov/22600740/) Reference respectively.
+    Once the controls and treatments are selected, the user must the choose normalization and t-test methods for the differential analysis. The normalization techniques offered include Log Transformation and VSN. Please select VSN and Cyber-T and then hit the 'run pairwise comparisons' button. The comparison should be completed in under 30 seconds. Once completed, we can move on to the next section of the tutorial. For more information on VSN and Cyber-T, please see the [VSN Reference](https://academic.oup.com/bioinformatics/article/18/suppl_1/S96/231881?login=true) and the [Cyber-T](https://pubmed.ncbi.nlm.nih.gov/22600740/) Reference respectively.
 
 6.  Please select the Cyber-T t-test and then hit the 'run pairwise comparisons' button. The comparison should be completed in under 30 seconds. Once completed, we can move on to the next section of the tutorial.
 

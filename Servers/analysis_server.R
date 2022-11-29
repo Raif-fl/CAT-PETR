@@ -19,7 +19,10 @@ box_pad_sc = reactive({input$box_pad_sc}) %>% throttle(1000)
 sc_top = reactive({input$sc_top}) %>% debounce(100)
 vp_top = reactive({input$vp_top}) %>% debounce(100)
 
-##### Colour Lists #####
+##### Color Lists #####
+
+# these lists are used to provide more readable versions of the color palettes 
+# offered by RColorBrewer
 div_list = list("Brown Blue Green" = "BrBG","Pink Yello Green" = "PiYG", "Purple Green" = "PRGn",
                 "Purple Orange" = "PuOr", "Red Blue" = "RdBu", "Red Grey" = "RdGy", "Red Yellow Blue" = "RdYlBu",
                 "Red Yellow Green" = "RdYlGn", "Spectral" = "Spectral")
@@ -33,10 +36,10 @@ seq_list = list("Blues" = "Blues", "Blue Green" = "BuGn", "Blue Purple" = "BuPu"
 
 ##### Overarching reactive UI #####
 
-# Creates a numeric input which allows the user to choose how many of the top genes/proteins to label. 
+# Creates a set of checkboxes that let the user specify which parts of the names appear on the labels. 
 output$label_options <- renderUI({
   options = c("Name","P_site", "Identifier")
-  columns = colnames(values$data[[1]])
+  columns = base::colnames(values$data[[1]])
   choice = columns[columns %in% options]
   checkboxGroupInput("label_options", label = h5("plot labels include:"),
                      choices = choice, selected = "Name", inline = TRUE)
@@ -48,17 +51,27 @@ output$label_options <- renderUI({
 output$vp_sidebar <- renderUI({
   if (input$tabset == "vp_plot") {
     tagList(
-      numericInput("vp_top", label = h5("Label top genes/proteins"), value = glob_sc_top, max = 100, step = 1),
-      materialSwitch("sig_label", label = "Label all genes/proteins outside cutoffs", right = TRUE, status = "info"),
-      actionButton("vp_top_bttn", label = "Add labelled entries to search bar.", style='padding:6px; font-size:90%'),
+      # Inputs specifying how to label the proteins outside of the cutoffs. 
+      numericInput("vp_top", label = h5("Label top genes/proteins"),
+                   value = glob_sc_top, max = 100, step = 1),
+      shinyWidgets::materialSwitch("sig_label", label = "Label all genes/proteins outside cutoffs",
+                                   right = TRUE, status = "info"),
+      actionButton("vp_top_bttn", label = "Add labelled entries to search bar.",
+                   style='padding:6px; font-size:90%'),
+      
+      # Slider's which control the cutoffs on the plot. 
       sliderInput("P_slider", label = h5("Log 10 P-value cutoff"), min = 0, 
                   max = 8, value = glob_P_slider, step = 0.1),
       sliderInput("FC_slider", label = h5("Log 2 fold change cutoff"), min = 0, 
                   max = 3, value = glob_FC_slider, step = 0.1),
+      
+      # Data download buttons. 
       h6(""),
-      downloadBttn("vp_data_all", label = "Download All Plot Data", style='simple', size = "sm", block = TRUE),
+      shinyWidgets::downloadBttn("vp_data_all", label = "Download All Plot data",
+                                 style='simple', size = "sm", block = TRUE),
       h6(""),
-      downloadBttn("vp_data_top", label = "Download Plot Data for Search Bar Entries", style='simple', size = "sm", block = TRUE)
+      shinyWidgets::downloadBttn("vp_data_top", label = "Download Plot data for Search Bar Entries",
+                                 style='simple', size = "sm", block = TRUE)
     )
   }
 })
@@ -72,9 +85,9 @@ observeEvent(input$FC_slider, {glob_FC_slider <<- input$FC_slider})
 output$vp_slider <- renderUI({
   comparisons = values$data
   req(comparisons)
-  sliderTextInput(inputId = "vp_slider", label = "View Comparisons", grid = TRUE,
+  shinyWidgets::sliderTextInput(inputId = "vp_slider", label = "View Comparisons", grid = TRUE,
                   force_edges = FALSE, choices = names(comparisons),
-                  width = paste(input$width_vp, "px", sep = ""))
+                  width = base::paste(input$width_vp, "px", sep = ""))
 })
 
 ##### Scatter plot reactive UI #####
@@ -83,17 +96,24 @@ output$vp_slider <- renderUI({
 output$sc_sidebar <- renderUI({
   if (input$tabset == "sc_plot") {
     tagList(
+      # Open up the pop-up used to define axes. 
       h5("Choose axes comparisons"),
       actionButton("define_axis", label = "Define Axes", style='padding:6px; font-size:90%'),
+      
+      # Inputs specifying how to label the proteins outside of the quantiles. 
       numericInput("sc_top", label = h5("Label top genes/proteins"), value = glob_sc_top, max = 100, step = 1),
-      materialSwitch("sig_label2", label = "Label all genes/proteins outside cutoffs", right = TRUE, status = "info"),
+      shinyWidgets::materialSwitch("sig_label2", label = "Label all genes/proteins outside cutoffs", right = TRUE, status = "info"),
       actionButton("sc_top_bttn", label = "Add labelled entries to search bar.", style='padding:6px; font-size:90%'),
+      
+      # Slider input that controls quantile width. 
       sliderInput("quant_num", label = h5("Quantile Percentage"), min = 0, 
                   max = 25, value = glob_quant_num, step = 0.5),
+      
+      # Data download buttons. 
       h6(""),
-      downloadBttn("sc_data_all", label = "Download All Plot Data", style='simple', size = "sm", block = TRUE),
+      shinyWidgets::downloadBttn("sc_data_all", label = "Download All Plot data", style='simple', size = "sm", block = TRUE),
       h6(""),
-      downloadBttn("sc_data_top", label = "Download Plot Data for Search Bar Entries", style='simple', size = "sm", block = TRUE)
+      shinyWidgets::downloadBttn("sc_data_top", label = "Download Plot data for Search Bar Entries", style='simple', size = "sm", block = TRUE)
     )
   }
 })
@@ -102,12 +122,12 @@ output$sc_sidebar <- renderUI({
 observeEvent(sc_top(), {glob_sc_top <<- sc_top()})
 observeEvent(input$quant_num, {glob_quant_num <<- input$quant_num})
 
-# Creates a slider which lets the user choose the comparison of log fold changes they want to view.
+# Creates a slider which lets the user choose the scatter plots they want to view.
 output$sc_slider <- renderUI({
-  req(x_comps(), y_comps())
-  sliderTextInput(inputId = "sc_slider", label = "View Scatter Plots", grid = TRUE,
-                  force_edges = FALSE, choices = paste(x_comps(), y_comps(), sep = "|"),
-                  width = paste(input$width_sc, "px", sep = ""))
+  req(x_axis(), y_axis())
+  shinyWidgets::sliderTextInput(inputId = "sc_slider", label = "View Scatter Plots", grid = TRUE,
+                  force_edges = FALSE, choices = base::paste(x_axis(), y_axis(), sep = "|"),
+                  width = base::paste(input$width_sc, "px", sep = ""))
 })
 
 ##### Heat map reactive UI #####
@@ -145,13 +165,12 @@ output$color_choice  <- renderUI({
   }
 })
 
-# materialSwitch("reverse_scale", "Flip Color Bar", value = TRUE, right = TRUE, status = "info"),
-# h5("Color Bar Range"),
-
+# Create two inputs that let users flip the color bar and choose between automatically generated
+# color bar limits or manual ones. 
 output$heat_sidebar2 <- renderUI({
   if (input$tabset == "heatmap") {
     tagList(
-      materialSwitch("reverse_scale", "Flip Color Bar", value = TRUE, right = TRUE, status = "info"),
+      shinyWidgets::materialSwitch("reverse_scale", "Flip Color Bar", value = TRUE, right = TRUE, status = "info"),
       h5("Color Bar Range"),
       radioButtons("heat_lims", label = NULL, choices = c("Auto Limits", "Manual Limits"),
                    selected = "Auto Limits", inline = TRUE)
@@ -159,13 +178,13 @@ output$heat_sidebar2 <- renderUI({
   }
 })
 
+# Optional inputs that allow the user to input the manual color bar limits. 
 output$heat_min <- renderUI({
   req(input$heat_lims)
   if (input$tabset == "heatmap" & input$heat_lims == "Manual Limits") {
     numericInput("heat_min", label = "min", value = -3, step = 0.1)
   }
 })
-
 output$heat_max <- renderUI({
   req(input$heat_lims)
   if (input$tabset == "heatmap" & input$heat_lims == "Manual Limits") {
@@ -180,21 +199,21 @@ output$heat_sidebar3 <- renderUI({
   req(input$color_type, name_search_b(), input$heat_lims)
   
   # Load necessary data
-  bound = bound()
+  bound1 = bound1()
   name_search = name_search_b()
-  bound = subset(bound, full_name %in% name_search)
+  bound1 = base::subset(bound1, full_name %in% name_search)
   
   if (input$tabset == "heatmap") {
     
     # Create the ranges. 
     if (input$heat_lims == "Auto Limits"){
       if (input$color_type == "Diverging") {
-        min = -1*abs_max(bound$log2_FC)
-        max = abs_max(bound$log2_FC)
+        min = -1*abs_max(bound1$log2_FC)
+        max = abs_max(bound1$log2_FC)
         if (length(glob_heat_num) < 2) {glob_heat_num = c(round_any(min, 0.1, floor), round_any(max, 0.1, ceiling))}
       } else if (input$color_type == "Sequential") {
-        min = min(bound$log2_FC)
-        max = max(bound$log2_FC)
+        min = min(bound1$log2_FC)
+        max = max(bound1$log2_FC)
         if (length(glob_heat_num) < 2) {glob_heat_num = c(round_any(min, 0.1, floor), round_any(max, 0.1, ceiling))}
       }
     } else if (input$heat_lims == "Manual Limits") {
@@ -204,12 +223,14 @@ output$heat_sidebar3 <- renderUI({
       if (length(glob_heat_num) < 2) {glob_heat_num = c(min, max)}
     }
 
+    # Create the color bar range slider, the column sorter, and the data download button.
     tagList(
       sliderInput("heat_num", label = NULL, min = round_any(min, 0.1, floor), 
                   max = round_any(max, 0.1, ceiling), value = glob_heat_num, step = 0.1),
       numericInput("sort_by", label = h5("Sort by Nth column"), min = 0, 
                    max = length(input$heat_comps), value = glob_sort_by, step = 1),
-      downloadBttn("hmap_data", label = "Download Plot Data", style='simple', size = "sm", block = TRUE)
+      shinyWidgets::downloadBttn("hmap_data", label = "Download Plot data", style='simple',
+                                 size = "sm", block = TRUE)
     )
   }
 })
@@ -224,20 +245,20 @@ observeEvent(input$sort_by, {glob_sort_by <<- input$sort_by})
 
 # Updates the select input using the server for increased performance. 
 observeEvent(values$data, {
-  updateSelectizeInput(session, "searchme", choices = unique(bind_rows(values$data)$full_name),
+  updateSelectizeInput(session, "searchme", choices = base::unique(dplyr::bind_rows(values$data)$full_name),
                        server = TRUE)
 })
 
 # An observation that updates global_search based on the searchbar inputs. 
 observeEvent(input$searchme, {
   global_search <<- input$searchme
-  global_search <<- global_search[!(duplicated(global_search) | 
-                                          duplicated(global_search, fromLast = TRUE))]
+  global_search <<- global_search[!(base::duplicated(global_search) | 
+                                          base::duplicated(global_search, fromLast = TRUE))]
 }, ignoreNULL = FALSE)
 
-# An observation that clears the search bar
+# An observation that clears the search bar.
 observeEvent(input$deselect, {
-  updateSelectizeInput(session, inputId = "searchme", choices = unique(bind_rows(values$data)$full_name),
+  updateSelectizeInput(session, inputId = "searchme", choices = base::unique(dplyr::bind_rows(values$data)$full_name),
                        selected = character(0), server = TRUE)
 }) 
 
@@ -281,25 +302,26 @@ output$sc_choice = renderUI({
   blank = sc_reset()
   
   # Creates the drag and drop bucket list based on the file names and 2 global variables. 
-  bucket_list(header = "Choose which comparisons will be on the X and Y-axis",
+  sortable::bucket_list(header = "Choose which comparisons will be on the X and Y-axis",
               group_name = "sc_choice_group", orientation = "horizontal",
-              add_rank_list(text = "All comparisons", labels = comparisons, input_id = "all_comps"),
-              add_rank_list(text = "X-axis", labels = global_x, input_id = "x_bucket"),
-              add_rank_list(text = "Y-axis", labels = global_y, input_id = "y_bucket")
+              sortable::add_rank_list(text = "All comparisons", labels = comparisons, input_id = "all_comps"),
+              sortable::add_rank_list(text = "X-axis", labels = global_x, input_id = "x_bucket"),
+              sortable::add_rank_list(text = "Y-axis", labels = global_y, input_id = "y_bucket")
   )
 })
 
 # Clear the slider after values$data is updated.
 sc_start = reactiveVal(NULL)
-x_comps = reactiveVal(NULL)
-y_comps = reactiveVal(NULL)
+x_axis = reactiveVal(NULL)
+y_axis = reactiveVal(NULL)
 observeEvent(values$data, {
   sc_start(NULL)
-  x_comps(NULL)
-  y_comps(NULL)
+  x_axis(NULL)
+  y_axis(NULL)
 })
 
-# Remake the slider after someone hits the process button. 
+# In respinse to the process2 button input, update the reactive x_axis and y_axis lists 
+# and update sc_sart to lsit to begin creating the scatter plots. 
 observeEvent(input$process2, {
   # If there is an issue with the chosen comparisons, throw an error. 
   if (length(input$x_bucket) != length(input$y_bucket) |
@@ -307,8 +329,8 @@ observeEvent(input$process2, {
       any(input$x_bucket == input$y_bucket)) {
     showModal(scModal(failed = TRUE))
   } else {
-    x_comps(input$x_bucket)
-    y_comps(input$y_bucket)
+    x_axis(input$x_bucket)
+    y_axis(input$y_bucket)
     sc_start(c(sc_start, 1))
     removeModal()
   }
@@ -369,7 +391,7 @@ observeEvent(input$vp_top_bttn, {
   global_search <<- c(global_search, top)
   
   # Update the contents of the search bar. 
-  updateSelectizeInput(session,inputId = "searchme",choices = unique(bind_rows(values$data)$full_name),
+  updateSelectizeInput(session,inputId = "searchme",choices = base::unique(dplyr::bind_rows(values$data)$full_name),
                        selected = global_search, server = TRUE)
 })
 
@@ -378,15 +400,15 @@ output$volcano_plot = renderUI({
   req(v_plot())
   v_plot = v_plot()[[1]]
   output$v_plot = renderPlot(v_plot, height = input$height_vp, width = input$width_vp)
-  plotOutput("v_plot", click = "plot_click_vp", height = paste(input$height_vp, "px", sep = ""),
-             width = paste(input$width_vp, "px", sep = ""))
+  plotOutput("v_plot", click = "plot_click_vp", height = base::paste(input$height_vp, "px", sep = ""),
+             width = base::paste(input$width_vp, "px", sep = ""))
 })
 
 # Allow the volcano plot to be downloaded by the user. 
 output$download_vp <- downloadHandler(
-  filename = function() { paste(input$vp_slider, '_vp_plot.svg', sep='') },
+  filename = function() { base::paste(input$vp_slider, '_vp_plot.svg', sep='') },
   content = function(file) {
-    ggsave(file, plot = v_plot()[[1]], device = "svg",
+    ggplot2::ggsave(file, plot = v_plot()[[1]], device = "svg",
            height = input$height_vp*4.4, width = input$width_vp*4.4, units = "px")
   }
 )
@@ -400,7 +422,7 @@ in_common = reactive({
   req(comparisons, sc_slider, input$label_options)
   
   # Split what was chosen on the slider into two comparisons
-  slider_split = str_split(sc_slider, "\\|")
+  slider_split = stringr::str_split(sc_slider, "\\|")
   comp1 = slider_split[[1]][1]
   comp2 = slider_split[[1]][2]
   
@@ -408,22 +430,23 @@ in_common = reactive({
   if (!comp1 %in% names(comparisons)) {return(NULL)}
   
   # Define which columns to perform the full join with. 
-  check = paste(c("Identifier", "Name", "P_site", "full_name"), collapse = "|")
-  by = str_extract(colnames(comparisons[[comp1]]), check)
+  check = base::paste(c("Identifier", "Name", "P_site", "full_name"), collapse = "|")
+  by = stringr::str_extract(base::colnames(comparisons[[comp1]]), check)
   by = by[!is.na(by)]
   
   # Merge two data frames of interest together by common names.
-  in_common = inner_join(comparisons[[comp1]], comparisons[[comp2]], by = by)
+  in_common = dplyr::inner_join(comparisons[[comp1]], comparisons[[comp2]], by = by)
   
   # Select only the columns needed for plotting and rename them.
   select = c(by, "log2_FC.x", "log2_FC.y")
-  in_common = subset(in_common, select = c(by, "log2_FC.x", "log2_FC.y"))
-  in_common = rename(in_common, !!comp1 := log2_FC.x, !!comp2 := log2_FC.y)
+  in_common = base::subset(in_common, select = c(by, "log2_FC.x", "log2_FC.y"))
+  in_common = plotly::rename(in_common, !!comp1 := log2_FC.x, !!comp2 := log2_FC.y)
   
   # Calculate the difference between the two comparisons.
   in_common$diff = in_common[[comp1]] - in_common[[comp2]]
   
-  colnames(in_common) = make.names(colnames(in_common))
+  # Ensure that the colnames are valid. 
+  base::colnames(in_common) = make.names(base::colnames(in_common))
   
   return(in_common)
 })
@@ -437,7 +460,7 @@ sc_plot = reactive({
   if (is.null(name_search)) {name_search = c()}
   
   # Split what was chosen on the slider into two comparisons
-  slider_split = str_split(sc_slider, "\\|")
+  slider_split = stringr::str_split(sc_slider, "\\|")
   comp1 = slider_split[[1]][1]
   comp2 = slider_split[[1]][2]
   
@@ -468,7 +491,7 @@ observeEvent(input$sc_top_bttn, {
   global_search <<- c(global_search, top)
   
   # Update the contents of the search bar. 
-  updateSelectizeInput(session,inputId = "searchme",choices = unique(bind_rows(values$data)$full_name),
+  updateSelectizeInput(session,inputId = "searchme",choices = base::unique(dplyr::bind_rows(values$data)$full_name),
                        selected = global_search, server = TRUE)
 })
 
@@ -477,15 +500,15 @@ output$scatter_plot = renderUI({
   req(sc_plot)
   sc_plot = sc_plot()[[1]]
   output$sc_plot = renderPlot(sc_plot, height = input$height_sc, width = input$width_sc)
-  plotOutput("sc_plot", click = "plot_click_sc", height = paste(input$height_sc, "px", sep = ""),
-             width = paste(input$width_sc, "px", sep = ""))
+  plotOutput("sc_plot", click = "plot_click_sc", height = base::paste(input$height_sc, "px", sep = ""),
+             width = base::paste(input$width_sc, "px", sep = ""))
 })
 
 # Dowlnoad the scatter plot
 output$download_sc <- downloadHandler(
-  filename = function() { paste(input$sc_slider, '_sc_plot.svg', sep='') },
+  filename = function() {base::paste(input$sc_slider, '_sc_plot.svg', sep='')},
   content = function(file) {
-    ggsave(file, plot = sc_plot()[[1]], device = "svg",
+    ggplot2::ggsave(file, plot = sc_plot()[[1]], device = "svg",
            height = input$height_sc*4.4, width = input$width_sc*4.4, units = "px")
   }
 )
@@ -493,57 +516,57 @@ output$download_sc <- downloadHandler(
 ##### Heat Map creation #####
 
 # Create the dataframe which will be turned into the heatmap. 
-bound = reactive({
+bound1 = reactive({
   comparisons = values$data
   req(comparisons, input$label_options)
-  bound = hmap_prep(comparisons, order = names(comparisons), label_options = input$label_options)
-  return(bound)
+  bound1 = hmap_prep(comparisons, order = names(comparisons), label_options = input$label_options)
+  return(bound1)
 })
 
 # Create the heatmap. 
 heatmap = reactive({
   heat_comps = input$heat_comps
-  bound = bound()
+  bound1 = bound1()
   name_search = name_search_b()
   sort_by = input$sort_by
-  req(heat_comps, bound, name_search, input$heat_num, sort_by)
+  req(heat_comps, bound1, name_search, input$heat_num, sort_by)
 
-  # Subset bound to only look at relevant genes/proteins. 
-  bound = subset(bound, full_name %in% name_search)
+  # Subset bound1 to only look at relevant genes/proteins. 
+  bound1 = BiocGenerics::subset(bound1, full_name %in% name_search)
   
   # See if there are any duplicate labels and use the fullnames for them. 
-  dupl_loc = duplicated(paste(bound$Name, bound$comp), incomparables=NA) |
-    duplicated(paste(bound$Name, bound$comp), fromLast = T, incomparables=NA)
-  bound$Name[dupl_loc] = bound$full_name[dupl_loc] 
+  dupl_loc = base::duplicated(base::paste(bound1$Name, bound1$comp), incomparables=NA) |
+    base::duplicated(base::paste(bound1$Name, bound1$comp), fromLast = T, incomparables=NA)
+  bound1$Name[dupl_loc] = bound1$full_name[dupl_loc] 
   
   # Turn the full names column into factors and order the dataframe based on those factors. 
-  bound$full_name = factor(x = bound$full_name, levels = name_search)
-  bound = bound[order(bound$full_name, decreasing = T),]
+  bound1$full_name = factor(x = bound1$full_name, levels = name_search)
+  bound1 = bound1[base::order(bound1$full_name, decreasing = T),]
   
   # Reorder and factor the Name column so the heatmap row order matches name input order. 
-  bound$Name = factor(x = bound$Name, levels = unique(bound$Name))
+  bound1$Name = factor(x = bound1$Name, levels = base::unique(bound1$Name))
   
   # Remove unneeded columns
-  bound$Identifier = NULL
-  bound$full_name = NULL
+  bound1$Identifier = NULL
+  bound1$full_name = NULL
   
   # Widen the dataframe.  
-  bound_wide = bound %>% pivot_wider(names_from = comp, values_from = log2_FC)
-  bound_wide = column_to_rownames(bound_wide, var = "Name")
+  bound1_wide = bound1 %>% tidyr::pivot_wider(names_from = comp, values_from = log2_FC)
+  bound1_wide = tibble::column_to_rownames(bound1_wide, var = "Name")
   
   # Sort the dataframe
   if (!sort_by==0) {
-    bound_wide = bound_wide[order(bound_wide[[sort_by]], decreasing = F, na.last = F),]
+    bound1_wide = bound1_wide[base::order(bound1_wide[[sort_by]], decreasing = F, na.last = F),]
   }
   
   # Subset based on the comparison selection. 
-  bound_wide = bound_wide[colnames(bound_wide) %in% heat_comps]
+  bound1_wide = bound1_wide[base::colnames(bound1_wide) %in% heat_comps]
   
   # figure out the total number of rows that will actually be shown
-  heat_length = length(bound_wide[,1])
+  heat_length = length(bound1_wide[,1])
 
   # Create the heatmap
-  heatmap = hmap(bound_wide, name_search, sort_by, heat_comps, heat_num = input$heat_num,
+  heatmap = hmap(bound1_wide, name_search, sort_by, heat_comps, heat_num = input$heat_num,
                  height_hmap = input$height_hmap, text_size = input$t_size_hm,
                  lg_title_size = input$lg_title_size, lg_text_size = input$lg_text_size,
                  color_choice = input$color_choice, reverse_scale = input$reverse_scale)
@@ -552,18 +575,18 @@ heatmap = reactive({
   width = length(heat_comps)*input$width_hmap + 260
   height = heat_length*input$height_hmap + 190
   
-  return(list(heatmap, height, width, bound_wide))
+  return(list(heatmap, height, width, bound1_wide))
 })
 
-##### Heatmap additional ######
+##### Heat Map additional ######
 
 # Create Heatmap with adjusting size by wrapping plotOutput in renderUI
 output$heatmap <- renderUI({
   heat_aspects = heatmap()
-  output$heat_content <- renderPlotly(heat_aspects[[1]])
+  output$heat_content <- plotly::renderPlotly(heat_aspects[[1]])
   req(heat_aspects)
-  plotlyOutput("heat_content", height = paste(heat_aspects[[2]], "px", sep = ""), 
-             width = paste(heat_aspects[[3]], "px", sep = ""))
+  plotly::plotlyOutput("heat_content", height = base::paste(heat_aspects[[2]], "px", sep = ""), 
+             width = base::paste(heat_aspects[[3]], "px", sep = ""))
 })
 
 ##### Plot interactivity controls. #####
@@ -585,10 +608,10 @@ observeEvent(input$plot_click_vp, {
                                                     addDist = TRUE)$full_name)
   
   # Remove duplicate points. 
-  global_search <<- global_search[!(duplicated(global_search) | 
-                                          duplicated(global_search, fromLast = TRUE))]
+  global_search <<- global_search[!(base::duplicated(global_search) | 
+                                          base::duplicated(global_search, fromLast = TRUE))]
   
-  updateSelectizeInput(session,inputId = "searchme",choices = unique(bind_rows(values$data)$full_name),
+  updateSelectizeInput(session,inputId = "searchme",choices = base::unique(dplyr::bind_rows(values$data)$full_name),
                        selected = global_search, server = TRUE)
   
 })
@@ -608,83 +631,83 @@ observeEvent(input$plot_click_sc, {
                                                     addDist = TRUE)$full_name)
   
   #remove duplicate points 
-  global_search <<- global_search[!(duplicated(global_search) | 
-                                          duplicated(global_search, fromLast = TRUE))]
+  global_search <<- global_search[!(base::duplicated(global_search) | 
+                                          base::duplicated(global_search, fromLast = TRUE))]
   
-  updateSelectizeInput(session,inputId = "searchme",choices = unique(bind_rows(values$data)$full_name),
+  updateSelectizeInput(session,inputId = "searchme",choices = base::unique(dplyr::bind_rows(values$data)$full_name),
                                                selected = global_search, server = TRUE)
 
 })
 
-##### Data Download #####
+##### data Download #####
 
 # Download all of the volcano plot data. 
 output$vp_data_all = downloadHandler(
   filename = function() {
-    paste(input$vp_slider, ".tsv", sep = "")
+    base::paste(input$vp_slider, ".tsv", sep = "")
   },
   content = function(file) {
     data = values$data[[input$vp_slider]]
-    reps = colnames(data)[!str_detect(colnames(data), "Rep") & !str_detect(colnames(data), "full")]
-    data = subset(data, select = c(reps))
-    vroom_write(data, file)
+    reps = base::colnames(data)[!stringr::str_detect(base::colnames(data), "Rep") & !stringr::str_detect(base::colnames(data), "full")]
+    data = base::subset(data, select = c(reps))
+    vroom::vroom_write(data, file)
   }
 )
 
 # Download the volcano plot data for genes/proteins in the searchbar. 
 output$vp_data_top = downloadHandler(
   filename = function() {
-    paste(input$vp_slider, ".tsv", sep = "")
+    base::paste(input$vp_slider, ".tsv", sep = "")
   },
   content = function(file) {
     data = values$data[[input$vp_slider]]
-    reps = colnames(data)[!str_detect(colnames(data), "Rep") & !str_detect(colnames(data), "full")]
-    data = subset(data, full_name %in% global_search, select = c(reps))
-    vroom_write(data, file)
+    reps = base::colnames(data)[!stringr::str_detect(base::colnames(data), "Rep") & !stringr::str_detect(base::colnames(data), "full")]
+    data = base::subset(data, full_name %in% global_search, select = c(reps))
+    vroom::vroom_write(data, file)
   }
 )
 
 # Download all of the scatter plot data. 
 output$sc_data_all = downloadHandler(
   filename = function() {
-    paste(input$sc_slider, ".tsv", sep = "")
+    base::paste(input$sc_slider, ".tsv", sep = "")
   },
   content = function(file) {
     data = in_common()
-    data = subset(data, select = c(-full_name))
-    vroom_write(data, file)
+    data = base::subset(data, select = c(-full_name))
+    vroom::vroom_write(data, file)
   }
 )
 
 # Download the scatter plot data for just the genes/proteins in the searchbar. 
 output$sc_data_top = downloadHandler(
   filename = function() {
-    paste(input$sc_slider, ".tsv", sep = "")
+    base::paste(input$sc_slider, ".tsv", sep = "")
   },
   content = function(file) {
     data = in_common()
-    data = subset(data, full_name %in% global_search, select = c(-full_name))
-    vroom_write(data, file)
+    data = base::subset(data, full_name %in% global_search, select = c(-full_name))
+    vroom::vroom_write(data, file)
   }
 )
 
 # Download the heatmap data. 
 output$hmap_data = downloadHandler(
   filename = function() {
-    paste("heatmap", ".tsv", sep = "")
+    base::paste("heatmap", ".tsv", sep = "")
   },
   content = function(file) {
     data = heatmap()[[4]]
-    data = rownames_to_column(data, "Name")
-    vroom_write(data, file)
+    data = tibble::rownames_to_column(data, "Name")
+    vroom::vroom_write(data, file)
   }
 )
 
 ##### Plot Download #####
-output$vp_plt_dwnld = renderUI(div(style = paste("position:relative;left:", input$width_vp, "px;height:2px", sep = ""),
+output$vp_plt_dwnld = renderUI(div(style = base::paste("position:relative;left:", input$width_vp, "px;height:2px", sep = ""),
                                    downloadButton("download_vp", label = NULL, icon = icon("camera", lib = "glyphicon"),
                                                   style='padding:4px; font-size:120%')))
 
-output$sc_plt_dwnld = renderUI(div(style = paste("position:relative;left:", input$width_sc, "px;height:2px", sep = ""),
+output$sc_plt_dwnld = renderUI(div(style = base::paste("position:relative;left:", input$width_sc, "px;height:2px", sep = ""),
                                    downloadButton("download_sc", label = NULL, icon = icon("camera", lib = "glyphicon"),
                                                   style='padding:4px; font-size:120%')))
