@@ -39,11 +39,9 @@ observeEvent(input$compare, {
 output$comp_choice = renderUI({
   
   # Load in the uploaded data files. 
-  if (input$data_type == "ud") {infile = input$upload}
-  else if (input$data_type == "kd") {infile = kinexus_data}
-  
-  # Get the names of the input files. 
-  names = stringr::str_remove(infile$name, ".csv")
+  infile = input$upload
+  if (input$data_type == "ud") {names = stringr::str_remove(infile$name, ".csv")}
+  else if (input$data_type == "kd") {names = stringr::str_remove(infile$name, ".txt")}
   
   # Used to reset everything whenever ran_list_1 is changed. 
   blank = comp_reset()
@@ -94,13 +92,10 @@ output$no_conf = renderUI({
 # A button that brings up the comparison selection bucket list. 
 output$compare = renderUI({
   if(is.null(input$upload) | input$data_type == "cpd") {return(NULL)}
-  if (input$data_type == "kd" & is.null(kinexus_data$data)) {return(NULL)}
     actionButton("compare", "Choose Comparisons")
 })
 
-###!!!### This can be improved with taglist. 
-
-# Create the input for the name of all pan-specific data. 
+# Create the optional inputs for phospho-site information. 
 output$apo_name = renderUI({  
   req(input$upload)
   if (input$data_type == "cpd") {return(NULL)}
@@ -110,31 +105,12 @@ output$apo_name = renderUI({
     df = utils::read.table(infile$datapath[1], head = TRUE, nrows = 1, sep = ",")
     if (!"P_site" %in% stringr::str_to_sentence(base::colnames(df))) {return(NULL)}
   }
-  if (input$data_type == "kd") {
-    if (is.null(kinexus_data$data)) {return(NULL)}
-  }
-  
-    # If the uploads do include the P-site, create a text input. 
-    textInput("apo_name", label = "Phospho-site (P_site) name used for pan-specific entries", value = "Pan")
-})
-
-# Create the input for deciding if the analysis will be using pan-specific or phospho-specific data. 
-output$apo_pho = renderUI({  
-  req(input$upload)
-    if (input$data_type == "cpd") {return(NULL)}
-    if (input$data_type == "ud") {
-      # Check if the inputs include P-sites. 
-      infile = input$upload 
-      df = utils::read.table(infile$datapath[1], head = TRUE, nrows = 1, sep = ",")
-      if (!"P_site" %in% stringr::str_to_sentence(base::colnames(df))) {return(NULL)}
-    }
-    if (input$data_type == "kd") {
-      if (is.null(kinexus_data$data)) {return(NULL)}
-    }
-  
-    # If the uploads include the P-site, create radio-buttons for phospho vs apo 
+  # If the uploads do include the P-site, create a text input. 
+  tagList(
+    textInput("apo_name", label = "Phospho-site (P_site) name used for pan-specific entries", value = "Pan"),
     radioButtons("apo_pho", label = "Complete analysis using pan-specific or phospho-specific data?",
                  choices = c("Phospho-specific", "Pan-specific"), selected = "Phospho-specific")
+  )
 })
 
 # Create some text with embedded URLs for use in the bucket list pop-up
@@ -150,17 +126,10 @@ output$cyber_link <- renderUI({
   for low sample sizes. For more information please see:", url2)
 })
 
-# A button that begins the cleaning process for the raw kinexus files. 
-output$start_clean = renderUI({
-  req(input$upload)
-  if (input$data_type == "kd" & is.null(kinexus_data$data)) {
-    actionButton("start_clean", "Clean Raw Kinexus Files")} else (return(NULL))
-})
-
 # A slider that allows the user to select the cutoff for disagreement between technical replicates. 
 output$max_error = renderUI({
   req(input$upload)
-  if (input$data_type == "kd" & is.null(kinexus_data$data)) {
+  if (input$data_type == "kd") {
     sliderInput("max_error",label ="Cutoff for percent error between technical replicates",
                 min = 0, max = 200, value = 50)} else (return(NULL))
 })
@@ -197,43 +166,6 @@ observeEvent(input$format_info, {
 
 ##### Processing Kinexus #####
 
-# Initialize reactive values to store the cleaned kinexus files. 
-#kinexus_data = reactiveValues(data = NULL, name = NULL) 
-
-# Process the kinexus data. 
-observeEvent(input$start_clean, {
-  
-  # Load in the data uploads. 
-  infile = input$upload
-  col_names_row = 53
-  
-  # Create a dataframe to hold all of the cleaned kinexus files. 
-  dataframes = list()
-  
-  # Create a progress bar to show the user how many of the Kinexus files have been processed. 
-  withProgress(message = "Cleaning Raw Kinexus Files", value = 0, {
-    for (i in 1:length(infile$datapath)) {
-      # Increment the progress bar, and update the detail text.
-      incProgress(1/length(infile$datapath), detail = base::paste("Tidying Kinexus file", toString(i),
-                                                            "/", toString(length(infile$datapath)), sep = ""))
-      df = clean_kinexus(infile$datapath[[i]], col_names_row = 53, max_error = input$max_error)
-      dataframes = append(dataframes, list(df))
-    }
-  })
-  
-  # Edit the names to match the input names. 
-  names(dataframes) = stringr::str_remove(infile$name, ".txt")
-  
-  # Add the dataframes to your reactive value. 
-  # kinexus_data$data = dataframes
-  # kinexus_data$name = names(dataframes)
-  
-  temp = tempfile(fileext = ".R")
-  saveRDS(dataframes, temp)
-  
-  check = read.csv(temp)
-})
-
 ##### Processing the data #####
 
 # Create an empty list of jobs and job tokens (needed to allow analysis cancellation).
@@ -248,11 +180,8 @@ values$data = readRDS("example.Rdata")
 run_cybert = eventReactive(input$process,  {
   
   # Load in the data.
-  if (input$data_type == "ud") {
-    infile = input$upload
-    dataframes = purrr::map(infile, data.table::fread)
-    names(dataframes) = stringr::str_remove(infile$name, ".csv")
-    } else if (input$data_type == "kd") {dataframes = kinexus_data$data}
+  if (input$data_type == "ud") {kd = FALSE}
+  else if (input$data_type == "kd") {kd = TRUE}
 
   # Create token IDs.
   token$id <- c(token$id, uuid::UUIDgenerate())
@@ -260,10 +189,10 @@ run_cybert = eventReactive(input$process,  {
 
   # Runs in the background.
   jobs[[token$last_id]] <- callr::r_bg(
-    func = compare_CyberT,
-    args = list(dataframes = dataframes, controls = input$control_list, treatments = input$treatment_list, 
+    func = compare_CyberT2,
+    args = list(infile = input$upload, controls = input$control_list, treatments = input$treatment_list, 
                 analysis = input$apo_pho, apo_name = input$apo_name, no_conf = input$no_conf,
-                var_norm = input$var_norm),
+                var_norm = input$var_norm, kd = kd, max_error = input$max_error),
     package = TRUE
   )
   

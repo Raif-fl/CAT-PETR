@@ -9,7 +9,6 @@ data_upload_tab <-
                             choices = list("User data" = "ud", "CAT PETR data" = "cpd", "Kinexus data" = "kd")),
                fileInput("upload", NULL, label = h5("Upload data"), multiple = TRUE),
                uiOutput("max_error"),
-               uiOutput("start_clean"),
                uiOutput("apo_name"),
                uiOutput("apo_pho"),
                uiOutput("compare"),

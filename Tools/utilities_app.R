@@ -1,13 +1,16 @@
 ## compare cybert2 #####
 
-compare_CyberT2 = function(infiles, controls, treatments, analysis = NULL,
+compare_CyberT2 = function(infile, controls, treatments, analysis = NULL,
                           apo_name = NULL, no_conf = FALSE, var_norm = "vsn",
-                          kd = FALSE){
+                          kd = FALSE, max_error = 50){
   
   if (kd == TRUE) {
-    datatables = clean_kinexus(infiles, col_names_row = 53, max_error = input$max_error)
+    datatables = clean_kinexus(infile, max_error = max_error)
+    names(datatables) = stringr::str_remove(infile$name, ".txt")
+  } else {
+    datatables = purrr::map(infile$datapath, data.table::fread)
+    names(datatables) = stringr::str_remove(infile$name, ".csv")
   }
-  datatables = purrr::map(infiles, data.table::fread)
   
   # Create a copy of all of the column options used. 
   col_options = stats::na.omit(stringr::str_extract(stringr::str_to_sentence(colnames(datatables[[1]])),
@@ -65,9 +68,11 @@ compare_CyberT2 = function(infiles, controls, treatments, analysis = NULL,
     numC = sum(!colnames(datatables[[controls[i]]]) == "full_name")
     numE = sum(!colnames(datatables[[treatments[i]]]) == "full_name")
     
+    print
+    
     # Set the keys for the merge. 
-    setkey(datatables[[controls[i]]], full_name)
-    setkey(datatables[[treatments[i]]], full_name)
+    data.table::setkey(datatables[[controls[i]]], full_name)
+    data.table::setkey(datatables[[treatments[i]]], full_name)
     
     # Perform the merge. 
     dt = datatables[[controls[i]]][datatables[[treatments[i]]], nomatch = 0]
@@ -97,11 +102,11 @@ compare_CyberT2 = function(infiles, controls, treatments, analysis = NULL,
     
     # Apply a normalization
     if (var_norm == "vsn") {
-      dt = runVsn(dt)
-      dt = as.data.table(dt)
+      input = runVsn(dt)
+      input = data.table::as.data.table(dt)
     } else if (var_norm == "logT") {
-      dt = log(dt)
-      dt = as.data.table(dt)
+      input = log(dt)
+      input = data.table::as.data.table(dt)
     }
     
     # Run CyberT.
@@ -109,17 +114,17 @@ compare_CyberT2 = function(infiles, controls, treatments, analysis = NULL,
                      doMulttest=TRUE, conf = conf)
     
     # Extract just the results and convert to data.table
-    results = subset(results, select = ("BH"))
+    results = subset(results, select = ("runMulttest.pVal."))
     
     # Create the finished data table. 
     dt[, full_name := stringr::str_replace_all(full, " _@_ ", " ")]
-    dt[, c(col_options) := tstrsplit(full, " _@_ ", fixed = TRUE)]
+    dt[, c(col_options) := data.table::tstrsplit(full, " _@_ ", fixed = TRUE)]
     dt[, Control_Average := rowMeans(dt[,1:numC])]
     dt[, Treated_Average := rowMeans(dt[,(numC+1):(numC+numE)])]
     dt[, c(1,2) := NULL]
     dt[, Fold_change := Treated_Average/Control_Average]
     dt[, log2_FC := log2(Fold_change)]
-    dt[, P_value_adjust := results$BH]
+    dt[, P_value_adjust := results$runMulttest.pVal.]
     dt[, log_p := -log10(P_value_adjust)]
     
     # append to lists
@@ -327,6 +332,8 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
                              label_options = c("Name", "P_site", "Identifier"),
                              sig_label = FALSE) {
   
+  data = as.data.frame(data)
+  
   # Remove infinite and NA values. 
   data = data[is.finite(rowSums(data[base::colnames(data) == "log2_FC" | base::colnames(data) == "log_p"])),]
   
@@ -447,6 +454,8 @@ one_to_one_app = function (data, comp1, comp2, to_label = c(), top = 0, quant_in
                            mycolors = c("black", "black", "black", "green"), sig_label = FALSE,
                            label_options = c("Name", "P_site", "Identifier")) {
   
+  data = as.data.frame(data)
+  
   # Ensure that only valid names are used. 
   comp1 = make.names(comp1)
   comp2 = make.names(comp2)
@@ -566,6 +575,7 @@ hmap_prep = function (dataframes, title = "", order = c(),
   
   # Take all of the dataframes and bind them together.
   bound = dplyr::bind_rows(dataframes)
+  bound = data.frame(bound)
   
   # Define a new column which will be the names of our matrix. 
   bound$Name = do.call(base::paste, c(bound[label_options], sep=" "))
@@ -640,89 +650,89 @@ hmap = function(bound, name_search, sort_by, heat_comps, heat_num, height_hmap =
 ########################################################################################
 ## clean kinexus
 ##    path = The path to a raw data file provided by Kinexus.
-##    col_names_row = The row which contains a set of names to be converted
-##                    Into the column names of the dataframe
 ##    max_error = The maximum percent error that is tolerated between technical replicates
 ##                where percent error is calculated as:
 ##                avg(replicate intensity - mean intensity)/avg(intensity) * 100
 #########################################################################################
 
-clean_kinexus = function(infiles, col_names_row = 53, max_error = 50) {
+clean_kinexus = function(infile, max_error = 50) {
   
-  raw_dataframes = "h"
+  raw_datatables = suppressMessages(purrr::map(infile$datapath, readr::read_tsv))
   
-  # Read in the raw kinexus KAM-1325 data file. 
-  raw_df1 = suppressMessages(readr::read_tsv(path))
+  datatables = list()
   
-  # Make a certain row the new column name and then subsequently delete that row.  
-  base::colnames(raw_df1) = raw_df1[col_names_row,]
-  raw_df1 = raw_df1[-col_names_row,]
-  base::colnames(raw_df1)
+  for (i in 1:length(raw_datatables)) {
+    # Make a certain row the new column name and then subsequently delete that row.  
+    colnames(raw_datatables[[i]]) = as.character(raw_datatables[[i]][53,])
+    raw_datatables[[i]] = raw_datatables[[i]][-53,]
+    colnames(raw_datatables[[i]])
+    
+    # select the columns of interest. 
+    raw_datatables[[i]] = subset(raw_datatables[[i]], select = c("Target Name with alias", "Human P-Site", "Cat. No.",
+                                                                 "Signal Median", "Background Median", "Signal Area", "Flag"))
+    
+    # rename the columns
+    colnames(raw_datatables[[i]]) = c("Target_Name", "P_Site", "Antibody",
+                                      "Signal_Median", "Background_Median", "Spot_Area", "Flag")
+    
+    # remove the na containing rows. 
+    raw_datatables[[i]] = tidyr::drop_na(raw_datatables[[i]])
+    
+    # convert to numeric 
+    raw_datatables[[i]] = suppressWarnings(dplyr::mutate(raw_datatables[[i]], Signal_Median = as.numeric(Signal_Median),
+                                                         Background_Median = as.numeric(Background_Median),
+                                                         Spot_Area = as.numeric(Spot_Area),
+                                                         Flag = as.numeric(Flag)))
+    
+    # calulate the raw intensity. 
+    raw_datatables[[i]] = dplyr::mutate(raw_datatables[[i]], raw_intensity = (Signal_Median - Background_Median)*(Spot_Area/100))
+    
+    # Calculate the scalar needed for normalization
+    summed_raw_intensity = sum(raw_datatables[[i]]$raw_intensity)
+    scalar = 20000000/summed_raw_intensity
+    
+    # calculate the normalized intensity. 
+    raw_datatables[[i]] = dplyr::mutate(raw_datatables[[i]], Normalized_intensity = raw_intensity*scalar)
+    
+    # Remove antibodies with flags equal to 1. 
+    flagged = dplyr::filter(raw_datatables[[i]], Flag == 1 | Flag == 2)$"Antibody"
+    raw_datatables[[i]] = dplyr::filter(raw_datatables[[i]], !raw_datatables[[i]]$"Antibody" %in% flagged)
+    
+    # use group by to calculate the average Intensity. 
+    dt_group = dplyr::group_by(raw_datatables[[i]], Antibody)
+    dt = suppressMessages(dplyr::summarise(dt_group, Target_Name = Target_Name, P_Site = P_Site,
+                                           Average_intensity = mean(Normalized_intensity),
+                                           Normalized_intensity = Normalized_intensity))
+    
+    # Calculate the error ranges
+    dt$diff = abs(dt$Average_intensity - dt$Normalized_intensity)
+    dt = suppressMessages(dplyr::summarise(dt, Target_Name = Target_Name, P_Site = P_Site,
+                                           Average_intensity = Average_intensity,
+                                           Error_range = mean(diff)))
+    
+    # remove duplicate rows 
+    dt = dplyr::distinct(dt, Antibody, .keep_all = TRUE)
+    
+    # Calculate the percent error. 
+    dt$percent_error = (dt$Error_range/dt$Average_intensity)*100
+    
+    # Remove antibodies with % error above a certain cutoff. 
+    dt = dplyr::filter(dt, percent_error < max_error)
+    
+    # Remove everything in brackets from the protein names.
+    dt$Target_Name = gsub(r"{\s*\([^\)]+\)}","",as.character(dt$Target_Name))
+    
+    # Sort by target name and rename columns. 
+    dt = dt[order(dt$Target_Name),]
+    dt = dt[, c("Target_Name", "P_Site", "Antibody", "Average_intensity", "Error_range", "percent_error")]
+    colnames(dt) = c("Name", "P_Site", "Identifier", "Rep_1", "Error_range", "percent_error")
+    
+    # Select only the columns of interest
+    dt = subset(dt, select = c("Name", "P_Site", "Identifier", "Rep_1"))
+    datatables = append(datatables, list(data.table::as.data.table(dt)))
+  }
   
-  # select the columns of interest. 
-  raw_df1 = base::subset(raw_df1, select = c("Target Name with alias", "Human P-Site", "Cat. No.",
-                                     "Signal Median", "Background Median", "Signal Area", "Flag"))
-  
-  # rename the columns
-  base::colnames(raw_df1) = c("Target_Name", "P_Site", "Antibody",
-                       "Signal_Median", "Background_Median", "Spot_Area", "Flag")
-  
-  # remove the na containing rows. 
-  raw_df1 = tidyr::drop_na(raw_df1)
-  
-  # convert to numeric 
-  raw_df1 = dplyr::mutate(raw_df1, Signal_Median = as.numeric(Signal_Median),
-                  Background_Median = as.numeric(Background_Median),
-                  Spot_Area = as.numeric(Spot_Area),
-                  Flag = as.numeric(Flag))
-  
-  # calulate the raw intensity. 
-  raw_df1 = dplyr::mutate(raw_df1, raw_intensity = (Signal_Median - Background_Median)*(Spot_Area/100))
-  
-  # Calculate the scalar needed for normalization
-  summed_raw_intensity = sum(raw_df1$raw_intensity)
-  scalar = 20000000/summed_raw_intensity
-  
-  # calculate the normalized intensity. 
-  raw_df1 = dplyr::mutate(raw_df1, Normalized_intensity = raw_intensity*scalar)
-  
-  # Remove antibodies with flags equal to 1. 
-  flagged = dplyr::filter(raw_df1, Flag == 1 | Flag == 2)$"Antibody"
-  raw_df1 = dplyr::filter(raw_df1, !raw_df1$"Antibody" %in% flagged)
-  
-  # use group by to calculate the average Intensity. 
-  df1_group = dplyr::group_by(raw_df1, Antibody)
-  df1 = suppressMessages(dplyr::summarise(df1_group, Target_Name = Target_Name, P_Site = P_Site,
-                                  Average_intensity = base::mean(Normalized_intensity),
-                                  Normalized_intensity = Normalized_intensity))
-  
-  # Calculate the error ranges
-  df1$diff = abs(df1$Average_intensity - df1$Normalized_intensity)
-  df1 = suppressMessages(dplyr::summarise(df1, Target_Name = Target_Name, P_Site = P_Site,
-                                  Average_intensity = Average_intensity,
-                                  Error_range = base::mean(diff)))
-  
-  # remove duplicate rows 
-  df1 = dplyr::distinct(df1, Antibody, .keep_all = TRUE)
-  
-  # Calculate the percent error. 
-  df1$percent_error = (df1$Error_range/df1$Average_intensity)*100
-  
-  # Remove antibodies with % error above a certain cutoff. 
-  df1 = dplyr::filter(df1, percent_error < max_error)
-  
-  # Remove everything in brackets from the protein names.
-  df1$Target_Name = gsub(r"{\s*\([^\)]+\)}","",as.character(df1$Target_Name))
-  
-  # Sort by target name and rename columns. 
-  df1 = df1[order(df1$Target_Name),]
-  df1 = df1[, c("Target_Name", "P_Site", "Antibody", "Average_intensity", "Error_range", "percent_error")]
-  colnames(df1) = c("Name", "P_Site", "Identifier", "Rep_1", "Error_range", "percent_error")
-  
-  # Select only the columns of interest
-  df1 = subset(df1, select = c("Name", "P_Site", "Identifier", "Rep_1"))
-  
-  return(df1)
+  return(datatables)
 }
 
 #######################################################################
