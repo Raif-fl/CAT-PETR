@@ -240,7 +240,7 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
   } else {top_reg = c()}
   
   # Check to see if the maximum labels have been overcome. 
-  if ((length(unique(c(to_label, top_reg))) > 150)) {stop("Exceeded maximum number of labels (150)")}
+  if ((length(unique(c(to_label, top_reg))) > 150)) {stop(shiny::safeError("Exceeded maximum number of labels (150)"))}
   
   # See if there are any dupliate labels and add identifier to fix them. 
   dupl_loc = base::duplicated(data$delabel, incomparables=NA) | base::duplicated(data$delabel, fromLast = T, incomparables=NA)
@@ -370,7 +370,7 @@ scatter_plot_app = function (data, comp1, comp2, to_label = c(), top = 0, quant_
   } else {top_reg = c()}
   
   # Check to see if the maximum labels have been overcome. 
-  if ((length(unique(c(to_label, top_reg))) > 150)) {stop("Error: Exceeded maximum number of labels (150)")}
+  if ((length(unique(c(to_label, top_reg))) > 150)) {stop(shiny::safeError("Exceeded maximum number of labels (150)"))}
   
   # Add the labels from to_label.  
   data$delabel[data$full_name %in% to_label] = data$label_form[data$full_name %in% to_label]
