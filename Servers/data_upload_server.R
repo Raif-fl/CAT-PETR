@@ -189,7 +189,7 @@ run_cybert = eventReactive(input$process,  {
 
   # Runs in the background.
   jobs[[token$last_id]] <- callr::r_bg(
-    func = compare_CyberT2,
+    func = compare_CyberT,
     args = list(infile = input$upload, controls = input$control_list, treatments = input$treatment_list, 
                 analysis = input$apo_pho, apo_name = input$apo_name, no_conf = input$no_conf,
                 var_norm = input$var_norm, kd = kd, max_error = input$max_error),

@@ -1,9 +1,28 @@
-## compare cybert2 #####
+##########################compare_CyberT ###############################################
+##    infile = a shiny fileInput dataframe. 
+##    controls = a vector of strings that correspond to the named elements of 
+##              dataframes. The strings in this list will be compared to the 
+##              strings in "treatment" on a one-to-one basis and will be treated 
+##              as the control in all calculations (e.g. fold change is control/treatment)
+##    treatments = a vector of strings that correspond to the named elements of 
+##                dataframes. The strings in this list will be compared to the 
+##                strings in "control" on a one-to-one basis and will be treated 
+##                as the treatment in all calculations (e.g. fold change is control/treatment)
+##    analysis = a string which specifies if the analysis should look at only phospho site specific
+##               data or only Pan specific data. Options are "Phospho-specific" and "Pan-specific"
+##    apo_name = The name used in the P_site column to specify that a datapoint is pan-specific. 
+##    no_conf = A boolean which specifies whether or not to set the confidence in CyberT to
+##              zero. If made True, then a normal t-test is used instead of CyberT t-test.
+##    var_norm = The normalization method to be used. options are "vsn", "logT", and "none"
+##    kd = A boolean which specifies whether the data uploaded is normal user data or kinexus data
+##    max_error = The maximum acceptable error when filtering kinexus data. 
+#######################################################################
 
-compare_CyberT2 = function(infile, controls, treatments, analysis = NULL,
+compare_CyberT = function(infile, controls, treatments, analysis = NULL,
                           apo_name = NULL, no_conf = FALSE, var_norm = "vsn",
                           kd = FALSE, max_error = 50){
   
+  # Look at the datatype being used and decide how to upload the data. 
   if (kd == TRUE) {
     datatables = clean_kinexus(infile, max_error = max_error)
     names(datatables) = stringr::str_remove(infile$name, ".txt")
@@ -13,10 +32,13 @@ compare_CyberT2 = function(infile, controls, treatments, analysis = NULL,
   }
   
   # Create a copy of all of the column options used. 
-  col_options = stats::na.omit(stringr::str_extract(stringr::str_to_sentence(colnames(datatables[[1]])),
-                                                    pattern = "Name|P_site|Identifier"))
+  col_options = na.omit(stringr::str_extract(stringr::str_to_sentence(colnames(datatables[[1]])),
+                                             pattern = "Name|P_site|Identifier"))
+  col_options = factor(col_options, levels = c("Name", "P_site", "Identifier"))
+  col_options = col_options[order(col_options)]
+  col_options = as.character(col_options)
   
-  # Clean up the contents of the dataframe.
+  # Clean up the contents of the datatables.
   for (i in 1:length(datatables)) {
     # Adjust the format of the column names. 
     colnames(datatables[[i]]) = stringr::str_to_sentence(colnames(datatables[[i]]))
@@ -58,6 +80,7 @@ compare_CyberT2 = function(infile, controls, treatments, analysis = NULL,
     }
   }
   
+  # Create empty lists to store the data comparisons. 
   comparisons = list()
   comp_names = c()
   
@@ -67,8 +90,6 @@ compare_CyberT2 = function(infile, controls, treatments, analysis = NULL,
     # Find the names to be used by cybert for controls and treats. 
     numC = sum(!colnames(datatables[[controls[i]]]) == "full_name")
     numE = sum(!colnames(datatables[[treatments[i]]]) == "full_name")
-    
-    print
     
     # Set the keys for the merge. 
     data.table::setkey(datatables[[controls[i]]], full_name)
@@ -121,7 +142,7 @@ compare_CyberT2 = function(infile, controls, treatments, analysis = NULL,
     dt[, c(col_options) := data.table::tstrsplit(full, " _@_ ", fixed = TRUE)]
     dt[, Control_Average := rowMeans(dt[,1:numC])]
     dt[, Treated_Average := rowMeans(dt[,(numC+1):(numC+numE)])]
-    dt[, c(1,2) := NULL]
+    dt[, c(1:(numC+numE)) := NULL]
     dt[, Fold_change := Treated_Average/Control_Average]
     dt[, log2_FC := log2(Fold_change)]
     dt[, P_value_adjust := results$runMulttest.pVal.]
@@ -147,158 +168,7 @@ compare_CyberT2 = function(infile, controls, treatments, analysis = NULL,
   return(comparisons)
 }
 
-
-
-#######################################################################
-## compare_CyberT
-##    dataframes = A list of dataframes that you wish to compare to each other 
-##                  (Calculate fold change and log2 fold change and get P-value)
-##    control = a vector of strings that correspond to the named elements of 
-##              dataframes. The strings in this list will be compared to the 
-##              strings in "treatment" on a one-to-one basis and will be treated 
-##              as the control in all calculations (e.g. fold change is control/treatment)
-##    treatment = a vector of strings that correspond to the named elements of 
-##                dataframes. The strings in this list will be compared to the 
-##                strings in "control" on a one-to-one basis and will be treated 
-##                as the treatment in all calculations (e.g. fold change is control/treatment)
-#######################################################################
-
-compare_CyberT = function(dataframes, controls, treatments, analysis = NULL,
-                          apo_name = NULL, no_conf = FALSE, var_norm = "vsn") {
-  
-  # For each dataframe, convert all column names to sentence case
-  for (i in 1:length(dataframes)) {
-    base::colnames(dataframes[[i]]) = stringr::str_to_sentence(base::colnames(dataframes[[i]]))
-  }
-  
-  # Create empty lists which will contain the data from each sample comparison and the name of the comparison
-  comparisons = list()
-  comp_names = c()
-  
-  # Use the compare_CyberT function in combination with a loop to get P-values for all comparisons.
-  for (i in 1:length(controls)) {
-    
-    print(base::paste("Processing Comparison ", toString(i), "/", toString(length(controls)), sep = ""))
-   
-    # define the control and treatment groups
-    cont = dataframes[[controls[i]]]
-    treat = dataframes[[treatments[i]]]
-    # Remove "-" symbols as they cause trouble downstream. 
-    cont$Name = stringr::str_replace_all(cont$Name, "-", "_")
-    treat$Name = stringr::str_replace_all(treat$Name, "-", "_")
-    # Add a fullname column based on the identifier columns. 
-    cont$full_name = suppressWarnings(base::paste(cont$Name, cont$P_site, cont$Identifier))
-    treat$full_name = suppressWarnings(base::paste(treat$Name, treat$P_site, treat$Identifier))
-    
-    # Detect if there are duplicates in the full name identifier and throw a warning. 
-    if (sum(base::duplicated(cont$full_name)) > 0 | sum(base::duplicated(cont$full_name)) > 0) {
-      warning(base::paste("Proteins/genes with identical names and identifiers detected. Suffixes will be
-                    added to the name of duplicated Proteins/genes"))
-      cont$full_name = make.unique(cont$full_name, sep = "_")
-      treat$full_name = make.unique(treat$full_name, sep = "_")
-    }
-    
-    # Merge the control and treatment groups by identifiers.
-    suppressWarnings(if ("Identifier" %in% base::colnames(cont) & "P_site" %in% base::colnames(cont)) {
-      df1 = dplyr::inner_join(cont, treat, by = c("full_name", "Name", "P_site", "Identifier"))
-      check = T
-    } else if ("Identifier" %in% base::colnames(cont)) {
-      df1 = dplyr::inner_join(cont, treat, by = c("full_name", "Name", "Identifier"))
-      check = F
-    } else if ("P_site" %in% base::colnames(cont)) {
-      df1 = dplyr::inner_join(cont, treat, by = c("full_name", "Name", "P_site"))
-      check = T
-    } else {
-      df1 = dplyr::inner_join(cont, treat, by = c("full_name", "Name"))
-      check = F
-    })
-    
-    # Find the locations of everything that is a value. 
-    cont_locs = base::which(stringr::str_detect(base::colnames(df1), "\\.x"))
-    treat_locs = base::which(stringr::str_detect(base::colnames(df1), "\\.y"))
-    # Change values column names into control and treatment column names. 
-    for (j in cont_locs) {
-      c_name = stringr::str_replace(base::colnames(df1)[j], "Rep", "Control_Rep")
-      c_name = stringr::str_remove(c_name, ".x")
-      df1 = dplyr::rename(df1, !!c_name := base::colnames(df1)[j])
-    }
-    for (j in treat_locs) {
-      c_name = stringr::str_replace(base::colnames(df1)[j], "Rep", "Treatment_Rep")
-      c_name = stringr::str_remove(c_name, ".y")
-      df1 = dplyr::rename(df1, !!c_name := base::colnames(df1)[j])
-    } 
-    
-    # If P_site is specified, then choose to look at either just apo or just phospho data. 
-    suppressWarnings(if (!is.null(analysis) == T & check == T) {
-      if (analysis == "Phospho-specific") {
-        df1 = df1[!base::grepl(apo_name, df1$P_site),]
-        base::rownames(df1) = NULL  
-      } else if (analysis == "Pan-specific") {
-        df1 = df1[base::grepl(apo_name, df1$P_site),]
-        base::rownames(df1) = NULL  
-      }
-    })
-    
-    # Determine optimal CyberT window size 
-    if (length(df1$Name) < 50) {
-      winSize = 3
-    } else if (length(df1$Name) < 1000) {
-      winSize = 31
-    } else if (length(df1$Name) > 1000 & length(df1$Name) < 2000) {
-      winSize = 51
-    } else if (length(df1$Name) > 2000) {
-      winSize = 101
-    }
-    
-    # Determine optimal CyberT confidence
-    if (ceiling(base::mean(length(cont_locs),length(treat_locs))) < 8) {
-      conf = 9 - ceiling(base::mean(length(cont_locs),length(treat_locs)))
-    } else {conf = 1}
-    if (no_conf == TRUE) {
-      conf = 0
-    }
-    
-    # Alter the dataframe into an appropriate input for CyberT. 
-    input = base::subset(df1, select = c("full_name", base::colnames(df1)[stringr::str_detect(base::colnames(df1), "Rep")]))
-    input = tibble::column_to_rownames(input, var = "full_name")
-    
-    # Apply a normalization
-    if (var_norm == "vsn") {
-      input = runVsn(input)
-    } else if (var_norm == "logT") {
-      input = log(input)
-    }
-  
-    # Run CyberT.
-    results = bayesT(input, length(cont_locs), length(treat_locs), bayes = TRUE, winSize = winSize,
-                                    doMulttest=TRUE, conf = conf)
-    
-    
-    # Bind the adjusted P-values from CyberT to the dataframe.
-    df1$P_value_adjust = results$BH
-    
-    # Calculate fold changes and the -log10 P-values.
-    df1$Treated_Average = base::rowMeans(df1[stringr::str_detect(base::colnames(df1), "Treatment")])
-    df1$Control_Average = base::rowMeans(df1[stringr::str_detect(base::colnames(df1), "Control")])
-    df1$Fold_change = df1$Treated_Average/df1$Control_Average
-    df1$log2_FC = log2(df1$Fold_change)
-    df1$log_p = -log10(df1$P_value_adjust)
-  
-    # append to lists
-    comparisons = base::append(comparisons, list(df1))
-    comp_names = base::append(comp_names, base::paste(controls[i], "vs", treatments[i], sep = "_"))
-
-  }
-  
-  # Use the comparison names to name the elements of the list of comparisons. 
-  names(comparisons) = comp_names
-  
-  return(comparisons)
-  
-}
-
-#######################################################################
-## volcano_plot_app
+########################## volcano_plot_app #############################################
 ##    data = a dataframe. 
 ##    to_label = a list of names that specify which proteins/genes to label on the 
 ##               volcano plot in addition to those chosen via top. 
@@ -332,6 +202,7 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
                              label_options = c("Name", "P_site", "Identifier"),
                              sig_label = FALSE) {
   
+  # Make sure the data uploaded is a dataframe. 
   data = as.data.frame(data)
   
   # Remove infinite and NA values. 
@@ -422,8 +293,7 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
   return(list(plot, unique(top_reg[!is.na(top_reg)])))
 }
 
-#######################################################################
-## one_to_one_app
+######################### scatter_plot_app #############################################
 ##    data: A dataframe that contains the log fold changes from two comparisons. 
 ##    comp1 + comp2: strings that specify the column names in data that contain 
 ##                   the log fold changes.
@@ -448,12 +318,13 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
 ##    label_options = The parts of the label that will be included. 
 #######################################################################
 
-one_to_one_app = function (data, comp1, comp2, to_label = c(), top = 0, quant_int = c(0.01, 0.99),
+scatter_plot_app = function (data, comp1, comp2, to_label = c(), top = 0, quant_int = c(0.01, 0.99),
                            line_color = "blue", int_color = "red", text_size = 2.3,  point_size = 1,
                            axes_text_size = 2, axes_label_size = 3, box_pad = 0.3, point_pad = 0.2,
                            mycolors = c("black", "black", "black", "green"), sig_label = FALSE,
                            label_options = c("Name", "P_site", "Identifier")) {
   
+  # Make sure the data uploaded is a dataframe.
   data = as.data.frame(data)
   
   # Ensure that only valid names are used. 
@@ -544,9 +415,10 @@ one_to_one_app = function (data, comp1, comp2, to_label = c(), top = 0, quant_in
   return(list(label_plot, unique(top_reg[!is.na(top_reg)])))
 }
 
+######################### abs_max #######################################################
+## A helper function which finds the maximum value in a vector regardless of sign. 
 #######################################################################
-## abs_max. A helper function which finds the maximum value in a vector regardless of sign. 
-#######################################################################
+
 abs_max = function(vector) {
   # Define the upper and lower limits based on the maximum and minimum. 
   up_lim = max(vector, na.rm = T)
@@ -555,7 +427,7 @@ abs_max = function(vector) {
   return(max_lim)
 }
 
-#######################################################################
+######################### hmap_prep #####################################################
 ##  hmap_prep
 ##    dataframes = A list of dataframes outputted by the compare_CyberT function
 ##    title = A string that will be used as the title of the plot. 
@@ -565,33 +437,33 @@ abs_max = function(vector) {
 ##    label_options = The parts of the label that will be included. 
 #######################################################################
 
-hmap_prep = function (dataframes, title = "", order = c(),
-                      label_options = c("Name", "P_site", "Identifier")) {
-  
-  # add the name of the comparison to a column on the respective dataframe
-  for (i in 1:length(dataframes)) {
-    dataframes[[i]]$comp = names(dataframes[i])
+  hmap_prep = function (dataframes, title = "", order = c(),
+                        label_options = c("Name", "P_site", "Identifier")) {
+    
+    # add the name of the comparison to a column on the respective dataframe
+    for (i in 1:length(dataframes)) {
+      dataframes[[i]]$comp = names(dataframes[i])
+    }
+    
+    # Take all of the dataframes and bind them together.
+    bound = data.table::rbindlist(dataframes)
+    bound = as.data.frame(bound)
+    
+    # Define a new column which will be the names of our matrix. 
+    bound$Name = do.call(paste, c(bound[label_options], sep=" "))
+    
+    # subset the bound data in order to focus on the meaningful columns. 
+    bound = subset(bound, select = c("Name", "comp", "log2_FC", "full_name"))
+    
+    # rearrange the order of the columns
+    if (length(order) > 0) {
+      bound$comp = factor(x = bound$comp, levels = order)
+    }
+    
+    return(bound)
   }
-  
-  # Take all of the dataframes and bind them together.
-  bound = dplyr::bind_rows(dataframes)
-  bound = data.frame(bound)
-  
-  # Define a new column which will be the names of our matrix. 
-  bound$Name = do.call(base::paste, c(bound[label_options], sep=" "))
-  
-  # subset the bound data in order to focus on the meaningful columns. 
-  bound = base::subset(bound, select = c("Name", "comp", "log2_FC", "full_name"))
-  
-  # rearrange the order of the columns
-  if (length(order) > 0) {
-    bound$comp = factor(x = bound$comp, levels = order)
-  }
-  
-  return(bound)
-}
 
-#######################################################################
+######################### hmap #########################################################
 ## hmap 
 ##    bound = a dataframe that was created by the hmap_prep() function.
 ##    name_search = A vector containing the names of all genes/proteins to plot as strings. 
@@ -647,96 +519,92 @@ hmap = function(bound, name_search, sort_by, heat_comps, heat_num, height_hmap =
   return(heatmap)
 }
 
-########################################################################################
-## clean kinexus
+######################### clean kinexus #################################################
 ##    path = The path to a raw data file provided by Kinexus.
 ##    max_error = The maximum percent error that is tolerated between technical replicates
 ##                where percent error is calculated as:
 ##                avg(replicate intensity - mean intensity)/avg(intensity) * 100
-#########################################################################################
+#######################################################################
 
 clean_kinexus = function(infile, max_error = 50) {
   
-  raw_datatables = suppressMessages(purrr::map(infile$datapath, readr::read_tsv))
+  # Load up the raw Kinexus files. 
+  raw_datatables = purrr::map(infile$datapath, data.table::fread)
   
+  # Create a list of for_loops to be populated during the analysis. 
   datatables = list()
-  
   for (i in 1:length(raw_datatables)) {
+    print(base::paste("Cleaning Kinexus File ", toString(i), "/", toString(length(raw_datatables)), sep = ""))
+    
     # Make a certain row the new column name and then subsequently delete that row.  
-    colnames(raw_datatables[[i]]) = as.character(raw_datatables[[i]][53,])
-    raw_datatables[[i]] = raw_datatables[[i]][-53,]
-    colnames(raw_datatables[[i]])
+    colnames(raw_datatables[[i]]) = as.character(raw_datatables[[i]][57,])
+    raw_datatables[[i]] = raw_datatables[[i]][-57,]
     
     # select the columns of interest. 
-    raw_datatables[[i]] = subset(raw_datatables[[i]], select = c("Target Name with alias", "Human P-Site", "Cat. No.",
-                                                                 "Signal Median", "Background Median", "Signal Area", "Flag"))
+    raw_datatables[[i]] = raw_datatables[[i]][, c("Target Name with alias", "Human P-Site", "Cat. No.",
+                                                  "Signal Median", "Background Median", "Signal Area", "Flag")]
     
     # rename the columns
     colnames(raw_datatables[[i]]) = c("Target_Name", "P_Site", "Antibody",
                                       "Signal_Median", "Background_Median", "Spot_Area", "Flag")
     
     # remove the na containing rows. 
-    raw_datatables[[i]] = tidyr::drop_na(raw_datatables[[i]])
+    raw_datatables[[i]] = na.omit(raw_datatables[[i]])
     
     # convert to numeric 
-    raw_datatables[[i]] = suppressWarnings(dplyr::mutate(raw_datatables[[i]], Signal_Median = as.numeric(Signal_Median),
-                                                         Background_Median = as.numeric(Background_Median),
-                                                         Spot_Area = as.numeric(Spot_Area),
-                                                         Flag = as.numeric(Flag)))
+    raw_datatables[[i]][, Signal_Median := as.numeric(Signal_Median)]
+    raw_datatables[[i]][, Background_Median := as.numeric(Background_Median)]
+    raw_datatables[[i]][, Spot_Area := as.numeric(Spot_Area)]
+    raw_datatables[[i]][, Flag := as.numeric(Flag)]
     
     # calulate the raw intensity. 
-    raw_datatables[[i]] = dplyr::mutate(raw_datatables[[i]], raw_intensity = (Signal_Median - Background_Median)*(Spot_Area/100))
+    raw_datatables[[i]][, raw_intensity := (Signal_Median - Background_Median)*(Spot_Area/100)]
     
     # Calculate the scalar needed for normalization
-    summed_raw_intensity = sum(raw_datatables[[i]]$raw_intensity)
+    summed_raw_intensity = sum(raw_datatables[[i]]$raw_intensity, na.rm = T)
     scalar = 20000000/summed_raw_intensity
     
     # calculate the normalized intensity. 
-    raw_datatables[[i]] = dplyr::mutate(raw_datatables[[i]], Normalized_intensity = raw_intensity*scalar)
+    raw_datatables[[i]][, Normalized_intensity := raw_intensity*scalar]
     
     # Remove antibodies with flags equal to 1. 
-    flagged = dplyr::filter(raw_datatables[[i]], Flag == 1 | Flag == 2)$"Antibody"
-    raw_datatables[[i]] = dplyr::filter(raw_datatables[[i]], !raw_datatables[[i]]$"Antibody" %in% flagged)
+    flagged = raw_datatables[[i]][Flag == 1 | Flag == 2,]$"Antibody"
+    raw_datatables[[i]] = raw_datatables[[i]][!raw_datatables[[i]]$"Antibody" %in% flagged,]
     
     # use group by to calculate the average Intensity. 
-    dt_group = dplyr::group_by(raw_datatables[[i]], Antibody)
-    dt = suppressMessages(dplyr::summarise(dt_group, Target_Name = Target_Name, P_Site = P_Site,
-                                           Average_intensity = mean(Normalized_intensity),
-                                           Normalized_intensity = Normalized_intensity))
+    raw_datatables[[i]][, Average_intensity:=mean(Normalized_intensity), by=list(Antibody)]
     
     # Calculate the error ranges
-    dt$diff = abs(dt$Average_intensity - dt$Normalized_intensity)
-    dt = suppressMessages(dplyr::summarise(dt, Target_Name = Target_Name, P_Site = P_Site,
-                                           Average_intensity = Average_intensity,
-                                           Error_range = mean(diff)))
+    raw_datatables[[i]][, Error_range:=mean(abs(Average_intensity - Normalized_intensity)), by = list(Antibody)]
     
     # remove duplicate rows 
-    dt = dplyr::distinct(dt, Antibody, .keep_all = TRUE)
+    raw_datatables[[i]] = unique(raw_datatables[[i]], by = "Antibody")
     
     # Calculate the percent error. 
-    dt$percent_error = (dt$Error_range/dt$Average_intensity)*100
+    raw_datatables[[i]][, percent_error := (Error_range/Average_intensity)]
     
     # Remove antibodies with % error above a certain cutoff. 
-    dt = dplyr::filter(dt, percent_error < max_error)
+    raw_datatables[[i]] = raw_datatables[[i]][percent_error < max_error,]
     
     # Remove everything in brackets from the protein names.
-    dt$Target_Name = gsub(r"{\s*\([^\)]+\)}","",as.character(dt$Target_Name))
+    raw_datatables[[i]][, Target_Name := gsub(r"{\s*\([^\)]+\)}","",as.character(Target_Name))]
     
     # Sort by target name and rename columns. 
-    dt = dt[order(dt$Target_Name),]
-    dt = dt[, c("Target_Name", "P_Site", "Antibody", "Average_intensity", "Error_range", "percent_error")]
-    colnames(dt) = c("Name", "P_Site", "Identifier", "Rep_1", "Error_range", "percent_error")
+    raw_datatables[[i]] = raw_datatables[[i]][order(Target_Name),]
+    raw_datatables[[i]] = raw_datatables[[i]][, c("Target_Name", "P_Site", "Antibody", "Average_intensity", "Error_range", "percent_error")]
+    colnames(raw_datatables[[i]]) = c("Name", "P_Site", "Identifier", "Rep_1", "Error_range", "percent_error")
     
     # Select only the columns of interest
-    dt = subset(dt, select = c("Name", "P_Site", "Identifier", "Rep_1"))
-    datatables = append(datatables, list(data.table::as.data.table(dt)))
+    raw_datatables[[i]] = raw_datatables[[i]][,c("Name", "P_Site", "Identifier", "Rep_1")]
+    datatables = append(datatables, list(raw_datatables[[i]]))
+    raw_datatables[[i]] = data.frame(c())
   }
   
   return(datatables)
 }
 
-#######################################################################
-## abs_max. A helper function which allows for significantly more flexible rounding. 
+######################### round_any ###################################################
+## A helper function that lets one round to any decimal position.  
 #######################################################################
 round_any = function(x, accuracy, f=round){f(x/ accuracy) * accuracy}
 

@@ -16,9 +16,7 @@
 #   bayesreg: v2.0beta
 
 ALMOST_ZERO = 10E-14;
-################################################################################
-##   bayesT
-##   
+############################## bayesT ##################################################
 ##       Adata - Actual data frame (ncol = numC + numE) contiguous controls then experimentals       
 ##       ppde = FDR test.., fits a beta and uniform mixture dist to the resulting p-values.
 ##           BETAFIT - param for ppde
@@ -167,7 +165,7 @@ bayesT <- function (aData, numC, numE, ppde=TRUE, betaFit=1, bayes=TRUE, winSize
   return(objBayes)
 }
 
-################################################################################
+############################## runVsn #################################################
 ## Simple wrapper to load and then run vsn
 ################################################################################
 runVsn <- function(data, ...){
@@ -184,7 +182,7 @@ runVsn <- function(data, ...){
          )
 }
 
-################################################################################
+############################## runMulttest ############################################
 ## Simple function to do Bonferroni and BH multiple testing correction.
 ################################################################################
 runMulttest <- function(pvals){
@@ -195,7 +193,7 @@ runMulttest <- function(pvals){
   adjPObj$adjp[order(adjPObj$index), -1]
 }
 
-################################################################################
+#######################################################################################
 ## Helper functions for the tstat calculations
 ################################################################################
 tstat <- function (sumStats)
@@ -303,8 +301,6 @@ runavgPool <- function(x,k=1) {
   }
   return(as.array(r))
 }
-
-###############################################################3
 
 writeError <- function(msg){
   cat('****Fatal CyberT ERROR****\n',

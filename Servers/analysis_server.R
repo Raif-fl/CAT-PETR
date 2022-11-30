@@ -39,7 +39,7 @@ seq_list = list("Blues" = "Blues", "Blue Green" = "BuGn", "Blue Purple" = "BuPu"
 # Creates a set of checkboxes that let the user specify which parts of the names appear on the labels. 
 output$label_options <- renderUI({
   options = c("Name","P_site", "Identifier")
-  columns = base::colnames(values$data[[1]])
+  columns = colnames(values$data[[1]])
   choice = columns[columns %in% options]
   checkboxGroupInput("label_options", label = h5("plot labels include:"),
                      choices = choice, selected = "Name", inline = TRUE)
@@ -468,7 +468,7 @@ sc_plot = reactive({
   quant_int = c(input$quant_num/100, (100 - input$quant_num)/100)
 
   # Make a scatter plot which includes lines showing a one-to-one ratio and 97.5% quantiles.
-  plot = one_to_one_app(in_common, comp1, comp2, to_label = name_search, top = sc_top(),
+  plot = scatter_plot_app(in_common, comp1, comp2, to_label = name_search, top = sc_top(),
                         quant_int = quant_int, line_color = "blue", int_color = "red",
                         text_size = t_size_sc(), point_size = p_size_sc(),
                         mycolors = c(input$withquant, input$blwquant, input$abvquant, input$Additional2),
