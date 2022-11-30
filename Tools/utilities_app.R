@@ -154,7 +154,7 @@ compare_CyberT = function(infile, controls, treatments, analysis = NULL,
     
     # Determine if old datatables can be deleted. 
     if (!names(datatables[controls[i]]) %in% controls[i+1:length(controls)] &&
-        names(datatables[controls[i]]) %in% treatments[i+1:length(treatments)]) {
+        !names(datatables[controls[i]]) %in% treatments[i+1:length(treatments)]) {
       datatables[controls[i]] = NULL
     }
     if (!names(datatables[treatments[i]]) %in% controls[i+1:length(controls)] &&
