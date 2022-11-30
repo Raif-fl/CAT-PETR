@@ -39,21 +39,19 @@ observeEvent(input$compare, {
 output$comp_choice = renderUI({
   
   # Load in the uploaded data files. 
-  if (input$data_type == "ud") {infile = input$upload}
-  else if (input$data_type == "kd") {infile = kinexus_data}
-  
-  # Get the names of the input files. 
-  names = str_remove(infile$name, ".csv")
+  infile = input$upload
+  if (input$data_type == "ud") {names = stringr::str_remove(infile$name, ".csv")}
+  else if (input$data_type == "kd") {names = stringr::str_remove(infile$name, ".txt")}
   
   # Used to reset everything whenever ran_list_1 is changed. 
   blank = comp_reset()
   
   # Creates the drag and drop bucket list based on the file names and 2 global variables. 
-  bucket_list(header = "Drag the samples to select comparisons of interest",
+  sortable::bucket_list(header = "Drag the samples to select comparisons of interest",
               group_name = "comp_choice_group", orientation = "horizontal",
-              add_rank_list(text = "Samples", labels = names, input_id = "sample_list"),
-              add_rank_list(text = "Controls", labels = global_cont, input_id = "control_list"),
-              add_rank_list(text = "Treatments", labels = global_treat, input_id = "treatment_list")
+              sortable::add_rank_list(text = "Samples", labels = names, input_id = "sample_list"),
+              sortable::add_rank_list(text = "Controls", labels = global_cont, input_id = "control_list"),
+              sortable::add_rank_list(text = "Treatments", labels = global_treat, input_id = "treatment_list")
   )
 })
 
@@ -94,71 +92,44 @@ output$no_conf = renderUI({
 # A button that brings up the comparison selection bucket list. 
 output$compare = renderUI({
   if(is.null(input$upload) | input$data_type == "cpd") {return(NULL)}
-  if (input$data_type == "kd" & is.null(kinexus_data$data)) {return(NULL)}
     actionButton("compare", "Choose Comparisons")
 })
 
-# Create the input for the name of all pan-specific data. 
+# Create the optional inputs for phospho-site information. 
 output$apo_name = renderUI({  
   req(input$upload)
   if (input$data_type == "cpd") {return(NULL)}
   if (input$data_type == "ud") {
     # Check if the inputs include P-sites. 
     infile = input$upload 
-    df = read.table(infile$datapath[1], head = TRUE, nrows = 1, sep = ",")
-    if (!"P_site" %in% str_to_sentence(colnames(df))) {return(NULL)}
+    df = utils::read.table(infile$datapath[1], head = TRUE, nrows = 1, sep = ",")
+    if (!"P_site" %in% stringr::str_to_sentence(base::colnames(df))) {return(NULL)}
   }
-  if (input$data_type == "kd") {
-    if (is.null(kinexus_data$data)) {return(NULL)}
-  }
-  
-    # If the uploads do include the P-site, create a text input. 
-    textInput("apo_name", label = "Phospho-site (P_site) name used for pan-specific entries", value = "Pan")
-})
-
-# Create the input for deciding if the analysis will be using pan-specific or phospho-specific data. 
-output$apo_pho = renderUI({  
-  req(input$upload)
-    if (input$data_type == "cpd") {return(NULL)}
-    if (input$data_type == "ud") {
-      # Check if the inputs include P-sites. 
-      infile = input$upload 
-      df = read.table(infile$datapath[1], head = TRUE, nrows = 1, sep = ",")
-      if (!"P_site" %in% str_to_sentence(colnames(df))) {return(NULL)}
-    }
-    if (input$data_type == "kd") {
-      if (is.null(kinexus_data$data)) {return(NULL)}
-    }
-  
-    # If the uploads include the P-site, create radio-buttons for phospho vs apo 
+  # If the uploads do include the P-site, create a text input. 
+  tagList(
+    textInput("apo_name", label = "Phospho-site (P_site) name used for pan-specific entries", value = "Pan"),
     radioButtons("apo_pho", label = "Complete analysis using pan-specific or phospho-specific data?",
                  choices = c("Phospho-specific", "Pan-specific"), selected = "Phospho-specific")
+  )
 })
 
-url1 <- a("VSN Reference", href="https://academic.oup.com/bioinformatics/article/19/8/966/235230")
+# Create some text with embedded URLs for use in the bucket list pop-up
+url1 <- a("VSN Reference", href="https://academic.oup.com/bioinformatics/article/18/suppl_1/S96/231881?login=true")
 output$vsn_link <- renderUI({
-  tagList("Data normalization is reccomended. 2 normalization methods are provided: log transformation 
+  tagList("data normalization is reccomended. 2 normalization methods are provided: log transformation 
           and variance stabilization normalization (VSN). VSN is often preferable as it is able to handle
           values at or below zero. For more information on VSN, please see:", url1)
 })
-
 url2 <- a("Cyber-T Reference", href="https://pubmed.ncbi.nlm.nih.gov/22600740/")
 output$cyber_link <- renderUI({
   tagList("The Cyber-T method uses an empirical Bayesian variance estimate to adjust 
   for low sample sizes. For more information please see:", url2)
 })
 
-# A button that begins the cleaning process for the raw kinexus files. 
-output$start_clean = renderUI({
-  req(input$upload)
-  if (input$data_type == "kd" & is.null(kinexus_data$data)) {
-    actionButton("start_clean", "Clean Raw Kinexus Files")} else (return(NULL))
-})
-
 # A slider that allows the user to select the cutoff for disagreement between technical replicates. 
 output$max_error = renderUI({
   req(input$upload)
-  if (input$data_type == "kd" & is.null(kinexus_data$data)) {
+  if (input$data_type == "kd") {
     sliderInput("max_error",label ="Cutoff for percent error between technical replicates",
                 min = 0, max = 200, value = 50)} else (return(NULL))
 })
@@ -166,23 +137,23 @@ output$max_error = renderUI({
 ##### Example tables #####
 
 # Create the example data tables. 
-dt1 = datatable(head(read_csv("www/un_pr_example.csv", col_types = cols()), 4), options = list(scrollX = TRUE, dom = "t"),
+dt1 = DT::datatable(Matrix::head(readr::read_csv("www/un_pr_example.csv", col_types = vroom::cols()), 4), options = list(scrollX = TRUE, dom = "t"),
                 rownames = FALSE, width = "100%", class = "compact") %>%
-  formatStyle( 0, target= 'row', lineHeight='45%')
-dt2 = datatable(head(read_csv("www/pre_pr_example.csv", col_types = cols()), 4), options = list(scrollX = TRUE, dom = "t"),
+  DT::formatStyle( 0, target= 'row', lineHeight='45%')
+dt2 = DT::datatable(Matrix::head(readr::read_csv("www/pre_pr_example.csv", col_types = vroom::cols()), 4), options = list(scrollX = TRUE, dom = "t"),
                 rownames = FALSE, width = "100%", class = "compact") %>%
-  formatStyle( 0, target= 'row', lineHeight='85%')
+  DT::formatStyle( 0, target= 'row', lineHeight='85%')
 
 # Load up a small example table to show in the app. 
-output$un_pr_example <- renderDataTable(dt1)
-output$pre_pr_example <- renderDataTable(dt2)
+output$un_pr_example <- DT::renderDataTable(dt1)
+output$pre_pr_example <- DT::renderDataTable(dt2)
 
 # Creates a popup that contains some example tables
 exModal <- function(failed = FALSE) {
-  modalDialog(h3("Example User Data"),
-              dataTableOutput("un_pr_example"),
-              h3("Example CAT PETR Data"),
-              dataTableOutput("pre_pr_example"),
+  modalDialog(h3("Example User data"),
+              DT::dataTableOutput("un_pr_example"),
+              h3("Example CAT PETR data"),
+              DT::dataTableOutput("pre_pr_example"),
               span(""), size = "l",
               footer = tagList(modalButton("Close"))
   )
@@ -194,37 +165,6 @@ observeEvent(input$format_info, {
 })
 
 ##### Processing Kinexus #####
-
-# Initialize reactive values to store the cleaned kinexus files. 
-kinexus_data = reactiveValues(data = NULL, name = NULL) 
-
-# Process the kinexus data. 
-observeEvent(input$start_clean, {
-  
-  # Load in the data uploads. 
-  infile = input$upload
-  col_names_row = 53
-  
-  # Create a dataframe to hold all of the cleaned kinexus files. 
-  dataframes = list()
-  
-  withProgress(message = "Cleaning Raw Kinexus Files", value = 0, {
-    for (i in 1:length(infile$datapath)) {
-      # Increment the progress bar, and update the detail text.
-      incProgress(1/length(infile$datapath), detail = paste("Tidying Kinexus file", toString(i),
-                                                            "/", toString(length(infile$datapath)), sep = ""))
-      df = clean_kinexus(infile$datapath[[i]], col_names_row = 53, max_error = input$max_error)
-      dataframes = append(dataframes, list(df))
-    }
-  })
-  
-  # Edit the names to match the input names. 
-  names(dataframes) = str_remove(infile$name, ".txt")
-  
-  # Add the dataframes to your reactive value. 
-  kinexus_data$data = dataframes
-  kinexus_data$name = names(dataframes)
-})
 
 ##### Processing the data #####
 
@@ -240,22 +180,19 @@ values$data = readRDS("example.Rdata")
 run_cybert = eventReactive(input$process,  {
   
   # Load in the data.
-  if (input$data_type == "ud") {
-    infile = input$upload
-    dataframes = map(infile$datapath, read_csv, col_types = cols())
-    names(dataframes) = str_remove(infile$name, ".csv")
-    } else if (input$data_type == "kd") {dataframes = kinexus_data$data}
+  if (input$data_type == "ud") {kd = FALSE}
+  else if (input$data_type == "kd") {kd = TRUE}
 
   # Create token IDs.
-  token$id <- c(token$id, UUIDgenerate())
+  token$id <- c(token$id, uuid::UUIDgenerate())
   token$last_id <- token$id[[length(token$id)]]
 
-  # runs in the background.
+  # Runs in the background.
   jobs[[token$last_id]] <- callr::r_bg(
     func = compare_CyberT,
-    args = list(dataframes = dataframes, controls = input$control_list, treatments = input$treatment_list, 
+    args = list(infile = input$upload, controls = input$control_list, treatments = input$treatment_list, 
                 analysis = input$apo_pho, apo_name = input$apo_name, no_conf = input$no_conf,
-                var_norm = input$var_norm),
+                var_norm = input$var_norm, kd = kd, max_error = input$max_error),
     package = TRUE
   )
   
@@ -306,7 +243,7 @@ observeEvent(input$process,{
       values$data = jobs[[token$last_id]]$get_result()
       
       # Show a completion message. 
-      show_alert(
+      shinyWidgets::show_alert(
         title = "Processing Complete",
         type = "success"
       )
@@ -368,24 +305,24 @@ observeEvent(input$upload,  {
   infile = input$upload
   
   # If there is an issue with the uploaded files or chosen comparisons, throw an error. 
-  if (any(is.na(str_match(infile$name, ".csv")))) {
+  if (any(is.na(stringr::str_match(infile$name, ".csv")))) {
     warning("unrecognized file type. Please use .csv files")
     return(NULL)
     }
   
   # Load in the data.
-  comparisons = map(infile$datapath, read_csv, col_types = cols()) 
-  comparisons = map(comparisons, data.frame)
+  comparisons = purrr::map(infile$datapath, readr::read_csv, col_types = vroom::cols()) 
+  comparisons = purrr::map(comparisons, data.frame)
   
   # Get the names of the input files. 
-  names = str_remove(infile$name, ".csv")
+  names = stringr::str_remove(infile$name, ".csv")
   
   # Rename the datafrane list elements. 
   names(comparisons) = names
   values$data = comparisons
   
   # Create a small popup that lets users know the run is finished.
-  show_alert(
+  shinyWidgets::show_alert(
     title = "Upload Successful",
     type = "success"
   )
@@ -398,7 +335,7 @@ output$download_btn <- downloadHandler(
   
   # Define the name to be used for the zip file.
   filename = function(){
-    paste("my_data_", Sys.Date(), ".zip", sep = "")
+    base::paste("my_data_", Sys.Date(), ".zip", sep = "")
   },
   
   # Define the function which downloads the data. 
@@ -410,9 +347,9 @@ output$download_btn <- downloadHandler(
 
     # Save all of the data from the reactive values in a temporary directory.
     values$data %>%
-      imap(function(x,y){
+      purrr::imap(function(x,y){
         if(!is.null(x)){
-          file_name <- glue("{y}.csv")
+          file_name <- glue::glue("{y}.csv")
           readr::write_csv(x, file.path(temp_directory, file_name))
         }
       })

@@ -1,20 +1,19 @@
 data_upload_tab <- 
-  tabPanel("Data Upload",
+  tabPanel("data Upload",
            sidebarLayout(
              sidebarPanel(
-               fluidRow(column(12, div(style="display: inline-block;",h5("Select Upload Data Type")),
+               fluidRow(column(12, div(style="display: inline-block;",h5("Select Upload data Type")),
                                actionButton("format_info", label = "  ", icon = icon("question"), 
                                             style='padding:1px; font-size:80%', width = "28px"))),
                radioButtons("data_type", label = "",
-                            choices = list("User Data" = "ud", "CAT PETR Data" = "cpd", "Kinexus Data" = "kd")),
+                            choices = list("User data" = "ud", "CAT PETR data" = "cpd", "Kinexus data" = "kd")),
                fileInput("upload", NULL, label = h5("Upload data"), multiple = TRUE),
                uiOutput("max_error"),
-               uiOutput("start_clean"),
                uiOutput("apo_name"),
                uiOutput("apo_pho"),
                uiOutput("compare"),
                h5("Download processed data"),
-               downloadBttn("download_btn", style='simple', size = "sm", block = TRUE),
+               shinyWidgets::downloadBttn("download_btn", style='simple', size = "sm", block = TRUE),
             ),
             mainPanel( 
               tags$head(tags$style("#console{overflow-y:scroll; height: 400px}")),
