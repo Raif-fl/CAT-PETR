@@ -164,8 +164,6 @@ observeEvent(input$format_info, {
   showModal(exModal())
 })
 
-##### Processing Kinexus #####
-
 ##### Processing the data #####
 
 # Create an empty list of jobs and job tokens (needed to allow analysis cancellation).

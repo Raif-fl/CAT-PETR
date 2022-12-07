@@ -1,4 +1,4 @@
-##########################compare_CyberT ###############################################
+##########################compare_CyberT ################################################
 ##    infile = a shiny fileInput dataframe. 
 ##    controls = a vector of strings that correspond to the named elements of 
 ##              dataframes. The strings in this list will be compared to the 
@@ -16,7 +16,7 @@
 ##    var_norm = The normalization method to be used. options are "vsn", "logT", and "none"
 ##    kd = A boolean which specifies whether the data uploaded is normal user data or kinexus data
 ##    max_error = The maximum acceptable error when filtering kinexus data. 
-#######################################################################
+#########################################################################################
 
 compare_CyberT = function(infile, controls, treatments, analysis = NULL,
                           apo_name = NULL, no_conf = FALSE, var_norm = "vsn",
@@ -193,7 +193,7 @@ compare_CyberT = function(infile, controls, treatments, analysis = NULL,
 ##    label_options = The parts of the label that will be included. 
 ##    sig_label = A boolean which specifies whether all genes/proteins outside of cutoff 
 ##                should be labelled. 
-#######################################################################
+########################################################################################
 
 volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), P_cutoff = 3,
                              mycolors = c("blue", "red", "black", "green"), text_size = 3,
@@ -230,7 +230,7 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
   data$delabel = NA
   data$delabel[data$full_name %in% to_label] = data$label_form[data$full_name %in% to_label]
   
-  # Create a column with a combined metric for FC and P then choose a set number to label.
+  # Create a column with the euclidean distances to the originn and choose a set number to label.
   if (top > 0) {
     data$dist = sqrt(data$log_p^2 + data$log2_FC^2)
     data$dist[data$reg == "Non-significant"] = NA
@@ -316,7 +316,7 @@ volcano_plot_app = function (data, to_label = c(), top = 0, FC_range = c(-1,1), 
 ##    sig_label = A boolean which specifies whether all genes/proteins outside of the quantiles 
 ##                should be labelled. 
 ##    label_options = The parts of the label that will be included. 
-#######################################################################
+######################################################################################
 
 scatter_plot_app = function (data, comp1, comp2, to_label = c(), top = 0, quant_int = c(0.01, 0.99),
                            line_color = "blue", int_color = "red", text_size = 2.3,  point_size = 1,
@@ -417,7 +417,7 @@ scatter_plot_app = function (data, comp1, comp2, to_label = c(), top = 0, quant_
 
 ######################### abs_max #######################################################
 ## A helper function which finds the maximum value in a vector regardless of sign. 
-#######################################################################
+#########################################################################################
 
 abs_max = function(vector) {
   # Define the upper and lower limits based on the maximum and minimum. 
@@ -435,7 +435,7 @@ abs_max = function(vector) {
 ##            dataframes list. The order of this list will become the order of 
 ##            the columns in the heatmap. 
 ##    label_options = The parts of the label that will be included. 
-#######################################################################
+#########################################################################################
 
   hmap_prep = function (dataframes, title = "", order = c(),
                         label_options = c("Name", "P_site", "Identifier")) {
@@ -463,7 +463,7 @@ abs_max = function(vector) {
     return(bound)
   }
 
-######################### hmap #########################################################
+######################### hmap ############################################################
 ## hmap 
 ##    bound = a dataframe that was created by the hmap_prep() function.
 ##    name_search = A vector containing the names of all genes/proteins to plot as strings. 
@@ -477,7 +477,7 @@ abs_max = function(vector) {
 ##    lg_text_size = The size of the text used for the tick marks on the legend. 
 ##    color choice = The RColorBrewer palette to be used for the color bar. 
 ##    reverse_scale = A boolean which specifies if the color bar should be reversed. 
-#######################################################################
+  #########################################################################################
 
 hmap = function(bound, name_search, sort_by, heat_comps, heat_num, height_hmap = 30,
                 text_size = 12, lg_title_size = 11, lg_text_size = 10, color_choice = "RdBu",
@@ -524,7 +524,7 @@ hmap = function(bound, name_search, sort_by, heat_comps, heat_num, height_hmap =
 ##    max_error = The maximum percent error that is tolerated between technical replicates
 ##                where percent error is calculated as:
 ##                avg(replicate intensity - mean intensity)/avg(intensity) * 100
-#######################################################################
+#########################################################################################
 
 clean_kinexus = function(infile, max_error = 50) {
   
@@ -603,8 +603,8 @@ clean_kinexus = function(infile, max_error = 50) {
   return(datatables)
 }
 
-######################### round_any ###################################################
+######################### round_any #####################################################
 ## A helper function that lets one round to any decimal position.  
-#######################################################################
+#########################################################################################
 round_any = function(x, accuracy, f=round){f(x/ accuracy) * accuracy}
 

@@ -70,7 +70,6 @@ tutorial_tab <-
                      inputs as the defaults.", 
                    br(),
                    br(),
-                   # should be a needed change here. 
                      "The last new input is the 'choose comparisons' button which will be used to decide
                      which of our samples we want to statistically compare to each other. Click this 
                      button and move on to the next step.",

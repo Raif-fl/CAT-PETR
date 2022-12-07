@@ -212,8 +212,8 @@ output$heat_sidebar3 <- renderUI({
         max = abs_max(bound1$log2_FC)
         if (length(glob_heat_num) < 2) {glob_heat_num = c(round_any(min, 0.1, floor), round_any(max, 0.1, ceiling))}
       } else if (input$color_type == "Sequential") {
-        min = min(bound1$log2_FC)
-        max = max(bound1$log2_FC)
+        min = min(bound1$log2_FC, na.rm = TRUE)
+        max = max(bound1$log2_FC, na.rm = TRUE)
         if (length(glob_heat_num) < 2) {glob_heat_num = c(round_any(min, 0.1, floor), round_any(max, 0.1, ceiling))}
       }
     } else if (input$heat_lims == "Manual Limits") {
@@ -554,13 +554,13 @@ heatmap = reactive({
   bound1_wide = bound1 %>% tidyr::pivot_wider(names_from = comp, values_from = log2_FC)
   bound1_wide = tibble::column_to_rownames(bound1_wide, var = "Name")
   
+  # Subset based on the comparison selection. 
+  bound1_wide = bound1_wide[base::colnames(bound1_wide) %in% heat_comps]
+  
   # Sort the dataframe
   if (!sort_by==0) {
     bound1_wide = bound1_wide[base::order(bound1_wide[[sort_by]], decreasing = F, na.last = F),]
   }
-  
-  # Subset based on the comparison selection. 
-  bound1_wide = bound1_wide[base::colnames(bound1_wide) %in% heat_comps]
   
   # figure out the total number of rows that will actually be shown
   heat_length = length(bound1_wide[,1])
