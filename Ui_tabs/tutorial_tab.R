@@ -229,7 +229,7 @@ tutorial_tab <-
                                      heatmap by the first column.")
                            )),
                    br(),
-                   tags$li("Use the appearance option menu to alter the appearance of the volcano plot in the
+                   tags$li("Use the appearance option menu to alter the appearance of the heatmap in the
                            following ways:",
                            tags$ol(
                              tags$li("Decrease the label size to 11."),
