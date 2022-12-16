@@ -477,7 +477,7 @@ abs_max = function(vector) {
 ##    lg_text_size = The size of the text used for the tick marks on the legend. 
 ##    color choice = The RColorBrewer palette to be used for the color bar. 
 ##    reverse_scale = A boolean which specifies if the color bar should be reversed. 
-  #########################################################################################
+#########################################################################################
 
 hmap = function(bound, name_search, sort_by, heat_comps, heat_num, height_hmap = 30,
                 text_size = 12, lg_title_size = 11, lg_text_size = 10, color_choice = "RdBu",
@@ -571,7 +571,7 @@ clean_kinexus = function(infile, max_error = 50) {
     flagged = raw_datatables[[i]][Flag == 1 | Flag == 2,]$"Antibody"
     raw_datatables[[i]] = raw_datatables[[i]][!raw_datatables[[i]]$"Antibody" %in% flagged,]
     
-    # use group by to calculate the average Intensity. 
+    # Calculate the average Intensity. 
     raw_datatables[[i]][, Average_intensity:=mean(Normalized_intensity), by=list(Antibody)]
     
     # Calculate the error ranges
@@ -581,7 +581,7 @@ clean_kinexus = function(infile, max_error = 50) {
     raw_datatables[[i]] = unique(raw_datatables[[i]], by = "Antibody")
     
     # Calculate the percent error. 
-    raw_datatables[[i]][, percent_error := (Error_range/Average_intensity)]
+    raw_datatables[[i]][, percent_error := (Error_range/Average_intensity)*100]
     
     # Remove antibodies with % error above a certain cutoff. 
     raw_datatables[[i]] = raw_datatables[[i]][percent_error < max_error,]

@@ -4,7 +4,7 @@
 comp_reset = reactiveVal(c())
 
 # Creates a popup that contains the bucket list. 
-compModal <- function(failed = FALSE) {
+compModal = function(failed = FALSE) {
   modalDialog(uiOutput("comp_choice"), 
               hr(),
               h6("Normalization Technique"),
@@ -114,14 +114,14 @@ output$apo_name = renderUI({
 })
 
 # Create some text with embedded URLs for use in the bucket list pop-up
-url1 <- a("VSN Reference", href="https://academic.oup.com/bioinformatics/article/18/suppl_1/S96/231881?login=true")
-output$vsn_link <- renderUI({
+url1 = a("VSN Reference", href="https://academic.oup.com/bioinformatics/article/18/suppl_1/S96/231881?login=true")
+output$vsn_link = renderUI({
   tagList("data normalization is reccomended. 2 normalization methods are provided: log transformation 
           and variance stabilization normalization (VSN). VSN is often preferable as it is able to handle
           values at or below zero. For more information on VSN, please see:", url1)
 })
-url2 <- a("Cyber-T Reference", href="https://pubmed.ncbi.nlm.nih.gov/22600740/")
-output$cyber_link <- renderUI({
+url2 = a("Cyber-T Reference", href="https://pubmed.ncbi.nlm.nih.gov/22600740/")
+output$cyber_link = renderUI({
   tagList("The Cyber-T method uses an empirical Bayesian variance estimate to adjust 
   for low sample sizes. For more information please see:", url2)
 })
@@ -145,11 +145,11 @@ dt2 = DT::datatable(Matrix::head(readr::read_csv("www/pre_pr_example.csv", col_t
   DT::formatStyle( 0, target= 'row', lineHeight='85%')
 
 # Load up a small example table to show in the app. 
-output$un_pr_example <- DT::renderDataTable(dt1)
-output$pre_pr_example <- DT::renderDataTable(dt2)
+output$un_pr_example = DT::renderDataTable(dt1)
+output$pre_pr_example = DT::renderDataTable(dt2)
 
 # Creates a popup that contains some example tables
-exModal <- function(failed = FALSE) {
+exModal = function(failed = FALSE) {
   modalDialog(h3("Example User data"),
               DT::dataTableOutput("un_pr_example"),
               h3("Example CAT PETR data"),
@@ -167,8 +167,8 @@ observeEvent(input$format_info, {
 ##### Processing the data #####
 
 # Create an empty list of jobs and job tokens (needed to allow analysis cancellation).
-token <- reactiveValues(id = NULL, last_id = NULL)
-jobs <- reactiveValues()
+token = reactiveValues(id = NULL, last_id = NULL)
+jobs = reactiveValues()
 
 # Initialize a reactive value to store the data. 
 values = reactiveValues(data = NULL) 
@@ -182,11 +182,11 @@ run_cybert = eventReactive(input$process,  {
   else if (input$data_type == "kd") {kd = TRUE}
 
   # Create token IDs.
-  token$id <- c(token$id, uuid::UUIDgenerate())
-  token$last_id <- token$id[[length(token$id)]]
+  token$id = c(token$id, uuid::UUIDgenerate())
+  token$last_id = token$id[[length(token$id)]]
 
   # Runs in the background.
-  jobs[[token$last_id]] <- callr::r_bg(
+  jobs[[token$last_id]] = callr::r_bg(
     func = compare_CyberT,
     args = list(infile = input$upload, controls = input$control_list, treatments = input$treatment_list, 
                 analysis = input$apo_pho, apo_name = input$apo_name, no_conf = input$no_conf,
@@ -263,14 +263,14 @@ observeEvent(input$stop, {
     # Kill the process. 
     if (length(token$id) > 0) {
       jobs[[token$last_id]]$kill()
-      token$id <- token$id[-length(token$id)]
+      token$id = token$id[-length(token$id)]
       if (length(token$id) > 0) {
-        token$last_id <- token$id[[length(token$id)]]
+        token$last_id = token$id[[length(token$id)]]
       }
     }
   
     # Print a message stating that the process was stopped. 
-    output$console <- renderText(expr = {
+    output$console = renderText(expr = {
       if (is.null(token$id)) {
         return(text)
       } else {
@@ -329,7 +329,7 @@ observeEvent(input$upload,  {
 ##### Downloading the processed data #####
 
 # Create a download handler which can download the processed data.
-output$download_btn <- downloadHandler(
+output$download_btn = downloadHandler(
   
   # Define the name to be used for the zip file.
   filename = function(){
@@ -340,14 +340,14 @@ output$download_btn <- downloadHandler(
   content = function(file){
     
     # Create a temporary directory. 
-    temp_directory <- file.path(tempdir(), as.integer(Sys.time()))
+    temp_directory = file.path(tempdir(), as.integer(Sys.time()))
     dir.create(temp_directory)
 
     # Save all of the data from the reactive values in a temporary directory.
     values$data %>%
       purrr::imap(function(x,y){
         if(!is.null(x)){
-          file_name <- glue::glue("{y}.csv")
+          file_name = glue::glue("{y}.csv")
           readr::write_csv(x, file.path(temp_directory, file_name))
         }
       })

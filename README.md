@@ -107,7 +107,7 @@ The Heatmap sub tab is unique in that the contents of the plot are entirely depe
     3.  Adjust the colorbar range to -7 and 7.
     4.  Enter 1 into the 'sort by nth column' input to sort the heatmap by the first column.
 
-21. Use the appearance option menu to alter the appearance of the volcano plot in the following ways:
+21. Use the appearance option menu to alter the appearance of the heatmap in the following ways:
 
     1.  Decrease the label size to 11.
     2.  Decrease the tile width to 35.

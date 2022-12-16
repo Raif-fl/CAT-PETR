@@ -37,7 +37,7 @@ seq_list = list("Blues" = "Blues", "Blue Green" = "BuGn", "Blue Purple" = "BuPu"
 ##### Overarching reactive UI #####
 
 # Creates a set of checkboxes that let the user specify which parts of the names appear on the labels. 
-output$label_options <- renderUI({
+output$label_options = renderUI({
   options = c("Name","P_site", "Identifier")
   columns = colnames(values$data[[1]])
   choice = columns[columns %in% options]
@@ -48,7 +48,7 @@ output$label_options <- renderUI({
 ##### Volcano plot reactive UI #####
 
 # Create the set of UI inputs which appear when a user switches to the volcano plot tab.  
-output$vp_sidebar <- renderUI({
+output$vp_sidebar = renderUI({
   if (input$tabset == "vp_plot") {
     tagList(
       # Inputs specifying how to label the proteins outside of the cutoffs. 
@@ -67,10 +67,10 @@ output$vp_sidebar <- renderUI({
       
       # Data download buttons. 
       h6(""),
-      shinyWidgets::downloadBttn("vp_data_all", label = "Download All Plot data",
+      shinyWidgets::downloadBttn("vp_data_all", label = "Download All Plot Data",
                                  style='simple', size = "sm", block = TRUE),
       h6(""),
-      shinyWidgets::downloadBttn("vp_data_top", label = "Download Plot data for Search Bar Entries",
+      shinyWidgets::downloadBttn("vp_data_top", label = "Download Plot Data for Search Bar Entries",
                                  style='simple', size = "sm", block = TRUE)
     )
   }
@@ -82,7 +82,7 @@ observeEvent(input$P_slider, {glob_P_slider <<- input$P_slider})
 observeEvent(input$FC_slider, {glob_FC_slider <<- input$FC_slider})
 
 # Creates a slider that lets the user choose which comparison they want to view for the volcano plot. 
-output$vp_slider <- renderUI({
+output$vp_slider = renderUI({
   comparisons = values$data
   req(comparisons)
   shinyWidgets::sliderTextInput(inputId = "vp_slider", label = "View Comparisons", grid = TRUE,
@@ -93,7 +93,7 @@ output$vp_slider <- renderUI({
 ##### Scatter plot reactive UI #####
 
 # Create the set of UI inputs which appear when a user switches to the scatter plot tab.  
-output$sc_sidebar <- renderUI({
+output$sc_sidebar = renderUI({
   if (input$tabset == "sc_plot") {
     tagList(
       # Open up the pop-up used to define axes. 
@@ -111,9 +111,9 @@ output$sc_sidebar <- renderUI({
       
       # Data download buttons. 
       h6(""),
-      shinyWidgets::downloadBttn("sc_data_all", label = "Download All Plot data", style='simple', size = "sm", block = TRUE),
+      shinyWidgets::downloadBttn("sc_data_all", label = "Download All Plot Data", style='simple', size = "sm", block = TRUE),
       h6(""),
-      shinyWidgets::downloadBttn("sc_data_top", label = "Download Plot data for Search Bar Entries", style='simple', size = "sm", block = TRUE)
+      shinyWidgets::downloadBttn("sc_data_top", label = "Download Plot Data for Search Bar Entries", style='simple', size = "sm", block = TRUE)
     )
   }
 })
@@ -123,7 +123,7 @@ observeEvent(sc_top(), {glob_sc_top <<- sc_top()})
 observeEvent(input$quant_num, {glob_quant_num <<- input$quant_num})
 
 # Creates a slider which lets the user choose the scatter plots they want to view.
-output$sc_slider <- renderUI({
+output$sc_slider = renderUI({
   req(x_axis(), y_axis())
   shinyWidgets::sliderTextInput(inputId = "sc_slider", label = "View Scatter Plots", grid = TRUE,
                   force_edges = FALSE, choices = base::paste(x_axis(), y_axis(), sep = "|"),
@@ -133,7 +133,7 @@ output$sc_slider <- renderUI({
 ##### Heat map reactive UI #####
 
 # Creates input for altering the comparisons shown on the heatmap. 
-output$heat_sidebar1  <- renderUI({
+output$heat_sidebar1 = renderUI({
   comparisons = values$data
   if (is.null(glob_heat_comps)) {glob_heat_comps <<- names(comparisons)}
   if (input$tabset == "heatmap") {
@@ -146,13 +146,13 @@ output$heat_sidebar1  <- renderUI({
 })
 
 # Create two inputs for controlling the type of color bar. 
-output$color_type  <- renderUI({
+output$color_type = renderUI({
   if (input$tabset == "heatmap") {
     selectInput("color_type", label = "Type", choices = c("Diverging", "Sequential"),
                 selected = "Diverging")
   }
 })
-output$color_choice  <- renderUI({
+output$color_choice = renderUI({
   req(input$color_type)
   if (input$tabset == "heatmap") {
     if (input$color_type == "Diverging") {
@@ -167,7 +167,7 @@ output$color_choice  <- renderUI({
 
 # Create two inputs that let users flip the color bar and choose between automatically generated
 # color bar limits or manual ones. 
-output$heat_sidebar2 <- renderUI({
+output$heat_sidebar2 = renderUI({
   if (input$tabset == "heatmap") {
     tagList(
       shinyWidgets::materialSwitch("reverse_scale", "Flip Color Bar", value = TRUE, right = TRUE, status = "info"),
@@ -179,13 +179,13 @@ output$heat_sidebar2 <- renderUI({
 })
 
 # Optional inputs that allow the user to input the manual color bar limits. 
-output$heat_min <- renderUI({
+output$heat_min = renderUI({
   req(input$heat_lims)
   if (input$tabset == "heatmap" & input$heat_lims == "Manual Limits") {
     numericInput("heat_min", label = "min", value = -3, step = 0.1)
   }
 })
-output$heat_max <- renderUI({
+output$heat_max = renderUI({
   req(input$heat_lims)
   if (input$tabset == "heatmap" & input$heat_lims == "Manual Limits") {
     numericInput("heat_max", label = "max", value = 3, step = 0.1)
@@ -193,7 +193,7 @@ output$heat_max <- renderUI({
 })
 
 # Additional UI inputs that control the color bar, sort the heatmap, and download the heatmap data. 
-output$heat_sidebar3 <- renderUI({
+output$heat_sidebar3 = renderUI({
   
   # Set requirements. 
   req(input$color_type, name_search_b(), input$heat_lims)
@@ -229,7 +229,7 @@ output$heat_sidebar3 <- renderUI({
                   max = round_any(max, 0.1, ceiling), value = glob_heat_num, step = 0.1),
       numericInput("sort_by", label = h5("Sort by Nth column"), min = 0, 
                    max = length(input$heat_comps), value = glob_sort_by, step = 1),
-      shinyWidgets::downloadBttn("hmap_data", label = "Download Plot data", style='simple',
+      shinyWidgets::downloadBttn("hmap_data", label = "Download Plot Data", style='simple',
                                  size = "sm", block = TRUE)
     )
   }
@@ -276,7 +276,7 @@ name_search_b = debounce(name_search, 333)
 sc_reset = reactiveVal(c())
 
 # Creates a popup that contains the bucket list used to define the scatter plot comparison selection. 
-scModal <- function(failed = FALSE) {
+scModal = function(failed = FALSE) {
   modalDialog(uiOutput("sc_choice"), span(""), size = "l",
               if (failed)
                 div(tags$b("Axes organization failed. Please ensure that an equal number of X and Y
@@ -405,7 +405,7 @@ output$volcano_plot = renderUI({
 })
 
 # Allow the volcano plot to be downloaded by the user. 
-output$download_vp <- downloadHandler(
+output$download_vp = downloadHandler(
   filename = function() { base::paste(input$vp_slider, '_vp_plot.svg', sep='') },
   content = function(file) {
     ggplot2::ggsave(file, plot = v_plot()[[1]], device = "svg",
@@ -505,7 +505,7 @@ output$scatter_plot = renderUI({
 })
 
 # Dowlnoad the scatter plot
-output$download_sc <- downloadHandler(
+output$download_sc = downloadHandler(
   filename = function() {base::paste(input$sc_slider, '_sc_plot.svg', sep='')},
   content = function(file) {
     ggplot2::ggsave(file, plot = sc_plot()[[1]], device = "svg",
@@ -581,9 +581,9 @@ heatmap = reactive({
 ##### Heat Map additional ######
 
 # Create Heatmap with adjusting size by wrapping plotOutput in renderUI
-output$heatmap <- renderUI({
+output$heatmap = renderUI({
   heat_aspects = heatmap()
-  output$heat_content <- plotly::renderPlotly(heat_aspects[[1]])
+  output$heat_content = plotly::renderPlotly(heat_aspects[[1]])
   req(heat_aspects)
   plotly::plotlyOutput("heat_content", height = base::paste(heat_aspects[[2]], "px", sep = ""), 
              width = base::paste(heat_aspects[[3]], "px", sep = ""))

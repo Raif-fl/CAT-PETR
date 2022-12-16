@@ -169,13 +169,9 @@ bayesT <- function (aData, numC, numE, ppde=TRUE, betaFit=1, bayes=TRUE, winSize
 ## Simple wrapper to load and then run vsn
 ################################################################################
 runVsn <- function(data, ...){
-  .libPaths("/home/baldig/shared_libraries/centos64/pkgs/R/2.15.1_fix/lib64/R/library")
   suppressMessages(require(vsn))
-  #cat('data in VSN: \n', colnames(data), '\n', as.vector(unlist(data[1,])), '\n',
-  #    as.vector(unlist(data[2,])), '\n', as.vector(unlist(data[3, ])), '\n');
   tryCatch(data.frame(vsn::justvsn(base::as.matrix(data), verbose=FALSE, minDataPointsPerStratum=10, ...)),
            error=function(e){
-             libs_a<-.libPaths()
              writeError('Error in running vsn.  Possible collinearity.  Check your data.')
              stop(e)
            }
