@@ -4,7 +4,7 @@ CAT PETR (Convenient Analysis Tool for Phosphorylation and Expression Testing in
 
 # Installation
 
-CAT PETR has been developed in R 4.2.1 and Shiny 1.7.2 and uses a wide variety of different packages. For ease of use, CAT PETR is provided as web application using shinyapps.io servers. This web application can be accessed using this link: <https://keegan-flanagan.shinyapps.io/CAT-PETR/> If you wish to run CAT PETR on your local computer, you will first need to Install R and R studio using the instructions from this link <https://www.r-project.org/> and this link <https://www.rstudio.com/products/rstudio/download/> respectively. Then, download or clone this GitHub repository using the green 'code' button at the top of the repository. Now, open and run the 'Install_Dependencies.R' file in Rstudio. After the dependencies are done installing, open up the app.R file and run the app by hitting the Run App button in Rstudio or by running the shiny::runApp() command. This should open up the app on your personal computer.
+CAT PETR has been developed in R 4.2.1 and Shiny 1.7.2 and uses a wide variety of different packages. For ease of use, CAT PETR is provided as web application using shinyapps.io servers. This web application can be accessed using this link: < https://av-gay-ubc.shinyapps.io/CAT-PETR/> If you wish to run CAT PETR on your local computer, you will first need to Install R and R studio using the instructions from this link <https://www.r-project.org/> and this link <https://www.rstudio.com/products/rstudio/download/> respectively. Then, download or clone this GitHub repository using the green 'code' button at the top of the repository. Now, open and run the 'Install_Dependencies.R' file in Rstudio. After the dependencies are done installing, open up the app.R file and run the app by hitting the Run App button in Rstudio or by running the shiny::runApp() command. This should open up the app on your personal computer.
 
 # Tutorial
 
@@ -16,7 +16,7 @@ This is a simple tutorial that covers the data upload and visualization sections
 
 2.  Go to the 'Data Upload' tab. The appearance of this tab is shown below.
 
-    ![](www/download_plain.png)(1) Selection boxes specifying if uploading un-analyzed user data, pre-analyzed CAT PETR data, or the raw data files from a Kinexus KAM-1325 microarray. Question mark brings up example input formats. (2) Data upload section. (3) Button which downloads analyzed data as a .zip file. (4) Console log which displays the analysis progress along with warnings, errors, and messages. (5) Button which clears the console log. (6) Button which cancels any active analysis processes.
+    ![](www/download_plain.png)(1) Selection boxes specifying if uploading un-analyzed user data, pre-analyzed CAT PETR data, the raw data files from a Kinexus KAM-1325 microarray, or the Microsoft Excel files provided by Full Moon Biosystems' antibody array services. Question mark brings up example input formats. (2) Data upload section. (3) Button which downloads analyzed data as a .zip file. (4) Console log which displays the analysis progress along with warnings, errors, and messages. (5) Button which clears the console log. (6) Button which cancels any active analysis processes.
 
 3.  Choose the 'User Data' option for the data upload type. Then, click on the browse button and navigate to wherever you have saved the example data. Note that each data file will represent a single sample/treatment group. Use the shift key to select all of the csv files and upload.
 
