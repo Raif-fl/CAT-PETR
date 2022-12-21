@@ -1,7 +1,7 @@
 # Package names
 packages <- c("tidyverse", "ggrepel", "shiny", "uuid", "shinyWidgets", "sortable", "RColorBrewer",
               "purrr", "plotly", "glue", "vroom", "DT", "stringr", "colourpicker", "svglite",
-              "BiocManager", "data.table", "zip") 
+              "BiocManager", "data.table", "zip", "readxl") 
 
 # Install packages not yet installed
 installed_packages <- packages %in% rownames(installed.packages())

@@ -14,42 +14,49 @@
 ##    no_conf = A boolean which specifies whether or not to set the confidence in CyberT to
 ##              zero. If made True, then a normal t-test is used instead of CyberT t-test.
 ##    var_norm = The normalization method to be used. options are "vsn", "logT", and "none"
-##    kd = A boolean which specifies whether the data uploaded is normal user data or kinexus data
+##    kd = A boolean which specifies whether the data uploaded are kinexus data
+##    fmd = A boolean which specifies whether the data uploaded are full moon biosystems data
 ##    max_error = The maximum acceptable error when filtering kinexus data. 
 #########################################################################################
 
 compare_CyberT = function(infile, controls, treatments, analysis = NULL,
                           apo_name = NULL, no_conf = FALSE, var_norm = "vsn",
-                          kd = FALSE, max_error = 50){
-  
-  # Look at the datatype being used and decide how to upload the data. 
-  if (kd == TRUE) {
+                          kd = FALSE, fmd = FALSE, max_error = 50, phospho = F,
+                          pho_spec = F){
+
+  # Look at the datatype being used and decide how to upload the data.
+  if (kd) {
     datatables = clean_kinexus(infile, max_error = max_error)
     names(datatables) = stringr::str_remove(infile$name, ".txt")
+  } else if (fmd) {
+    datatables = clean_full_moon(infile, phospho = phospho, pho_spec = pho_spec)
   } else {
     datatables = purrr::map(infile$datapath, data.table::fread)
     names(datatables) = stringr::str_remove(infile$name, ".csv")
   }
-  
-  # Create a copy of all of the column options used. 
+
+  # Create a copy of all of the column options used.
   col_options = na.omit(stringr::str_extract(stringr::str_to_sentence(colnames(datatables[[1]])),
                                              pattern = "Name|P_site|Identifier"))
   col_options = factor(col_options, levels = c("Name", "P_site", "Identifier"))
   col_options = col_options[order(col_options)]
   col_options = as.character(col_options)
-  
+
+  print(class(datatables[[1]]))
+  #Sys.sleep(30)
+
   # Clean up the contents of the datatables.
   for (i in 1:length(datatables)) {
-    # Adjust the format of the column names. 
+    # Adjust the format of the column names.
     colnames(datatables[[i]]) = stringr::str_to_sentence(colnames(datatables[[i]]))
-    
-    # Replace Rep with a unique identifier for each experiment. 
+
+    # Replace Rep with a unique identifier for each experiment.
     colnames(datatables[[i]]) = stringr::str_replace(colnames(datatables[[i]]), "Rep", names(datatables[i])[1])
-    
-    # Remove - signs as they cause problems later. 
+
+    # Remove - signs as they cause problems later.
     datatables[[i]][, Name := stringr::str_replace_all(Name, "-", "_")]
-    
-    # If P_site is specified, then choose to look at either just apo or just phospho data. 
+
+    # If P_site is specified, then choose to look at either just apo or just phospho data.
     suppressWarnings(if (!is.null(analysis) == T & "P_site" %in% colnames(datatables[[i]])) {
       if (analysis == "Phospho-specific") {
         datatables[[i]] = datatables[[i]][ datatables[[i]][, .I[!grepl(apo_name, P_site)], by = P_site]$V1 ]
@@ -57,8 +64,8 @@ compare_CyberT = function(infile, controls, treatments, analysis = NULL,
         datatables[[i]] = datatables[[i]][ datatables[[i]][, .I[grepl(apo_name, P_site)], by = P_site]$V1 ]
       }
     })
-    
-    # Create the full name column based on the identifiers. 
+
+    # Create the full name column based on the identifiers.
     suppressWarnings(if ("Identifier" %in% colnames(datatables[[i]]) & "P_site" %in% colnames(datatables[[i]])) {
       datatables[[i]][, full_name:=paste(Name, P_site, Identifier, sep = " _@_ ")]
     } else if ("Identifier" %in% base::colnames(datatables[[i]])) {
@@ -68,41 +75,41 @@ compare_CyberT = function(infile, controls, treatments, analysis = NULL,
     } else {
       datatables[[i]][, full_name:=Name]
     })
-    
-    # Remove the Name, P_site, and Identifier columns to save on space. 
+
+    # Remove the Name, P_site, and Identifier columns to save on space.
     suppressWarnings(datatables[[i]][, c("Name", "P_site", "Identifier") := NULL])
-    
-    # check if duplicates are present and if so throw a warning 
+
+    # check if duplicates are present and if so throw a warning
     if (sum(duplicated(datatables[[i]]$full_name)) > 0) {
       warning(paste("Proteins/genes with identical names and identifiers detected. Suffixes will be
                     added to the name of duplicated Proteins/genes"))
       datatables[[i]]$full_name = make.unique(datatables[[i]]$full_name, sep = "_")
     }
   }
-  
-  # Create empty lists to store the data comparisons. 
+
+  # Create empty lists to store the data comparisons.
   comparisons = list()
   comp_names = c()
-  
+
   for (i in 1:length(controls)) {
     print(base::paste("Processing Comparison ", toString(i), "/", toString(length(controls)), sep = ""))
-    
-    # Find the names to be used by cybert for controls and treats. 
+
+    # Find the names to be used by cybert for controls and treats.
     numC = sum(!colnames(datatables[[controls[i]]]) == "full_name")
     numE = sum(!colnames(datatables[[treatments[i]]]) == "full_name")
-    
-    # Set the keys for the merge. 
+
+    # Set the keys for the merge.
     data.table::setkey(datatables[[controls[i]]], full_name)
     data.table::setkey(datatables[[treatments[i]]], full_name)
-    
-    # Perform the merge. 
+
+    # Perform the merge.
     dt = datatables[[controls[i]]][datatables[[treatments[i]]], nomatch = 0]
-    
-    # Save full names for later then remove it. 
+
+    # Save full names for later then remove it.
     full = dt$full_name
     dt[, full_name := NULL]
-    
-    # Determine optimal CyberT window size 
+
+    # Determine optimal CyberT window size
     if (nrow(dt) < 50) {
       winSize = 3
     } else if (nrow(dt) < 1000) {
@@ -112,7 +119,7 @@ compare_CyberT = function(infile, controls, treatments, analysis = NULL,
     } else if (nrow(dt) > 2000) {
       winSize = 101
     }
-    
+
     # Determine optimal CyberT confidence
     if (ncol(dt)/2 < 8) {
       conf = 9 - ncol(dt)/2
@@ -120,7 +127,7 @@ compare_CyberT = function(infile, controls, treatments, analysis = NULL,
     if (no_conf == TRUE) {
       conf = 0
     }
-    
+
     # Apply a normalization
     if (var_norm == "vsn") {
       input = runVsn(dt)
@@ -129,15 +136,15 @@ compare_CyberT = function(infile, controls, treatments, analysis = NULL,
       input = log(dt)
       input = data.table::as.data.table(dt)
     }
-    
+
     # Run CyberT.
     results = bayesT(dt, numC, numE, bayes = TRUE, winSize = winSize,
                      doMulttest=TRUE, conf = conf)
-    
+
     # Extract just the results and convert to data.table
     results = subset(results, select = ("runMulttest.pVal."))
-    
-    # Create the finished data table. 
+
+    # Create the finished data table.
     dt[, full_name := stringr::str_replace_all(full, " _@_ ", " ")]
     dt[, c(col_options) := data.table::tstrsplit(full, " _@_ ", fixed = TRUE)]
     dt[, Control_Average := rowMeans(dt[,1:numC])]
@@ -147,12 +154,12 @@ compare_CyberT = function(infile, controls, treatments, analysis = NULL,
     dt[, log2_FC := log2(Fold_change)]
     dt[, P_value_adjust := results$runMulttest.pVal.]
     dt[, log_p := -log10(P_value_adjust)]
-    
+
     # append to lists
     comparisons = base::append(comparisons, list(dt))
     comp_names = base::append(comp_names, base::paste(controls[i], "vs", treatments[i], sep = "_"))
-    
-    # Determine if old datatables can be deleted. 
+
+    # Determine if old datatables can be deleted.
     if (!names(datatables[controls[i]]) %in% controls[i+1:length(controls)] &&
         !names(datatables[controls[i]]) %in% treatments[i+1:length(treatments)]) {
       datatables[controls[i]] = NULL
@@ -162,8 +169,8 @@ compare_CyberT = function(infile, controls, treatments, analysis = NULL,
       datatables[treatments[i]] = NULL
     }
   }
-  
-  # Use the comparison names to name the elements of the list of comparisons. 
+
+  # Use the comparison names to name the elements of the list of comparisons.
   names(comparisons) = comp_names
   return(comparisons)
 }
@@ -519,8 +526,8 @@ hmap = function(bound, name_search, sort_by, heat_comps, heat_num, height_hmap =
   return(heatmap)
 }
 
-######################### clean kinexus #################################################
-##    path = The path to a raw data file provided by Kinexus.
+######################### clean_kinexus #################################################
+##    path = The path to the raw data files provided by Kinexus.
 ##    max_error = The maximum percent error that is tolerated between technical replicates
 ##                where percent error is calculated as:
 ##                avg(replicate intensity - mean intensity)/avg(intensity) * 100
@@ -603,8 +610,193 @@ clean_kinexus = function(infile, max_error = 50) {
   return(datatables)
 }
 
+######################### clean_full_moon ###############################################
+##    path = The path to a raw data file provided by Kinexus.
+##    phospho = A boolean which specifies if working with phosphorylation data or
+##              expression data. 
+##    pho_spec = A boolean which specifies if looking at site specific Ab data or 
+##               phosphorylation specific Phospho- data. 
+#########################################################################################
+
+clean_full_moon = function(infile, phospho = FALSE, pho_spec = FALSE) {
+  # Load in the excel file. 
+  fm_data = readxl::read_excel(infile$datapath, sheet = "Assay Data")
+  
+  # Extract just the part around the Average Signal Data.  
+  as_col = which(stringr::str_detect(fm_data, "Average Signal"))
+  fm_data = fm_data[(as_col - 1):length(fm_data)]
+  
+  # Remove the empty rows.
+  as_i = which(stringr::str_detect(c(fm_data[[2]]), "Average Signal"))
+  fm_data = fm_data[-(1:(as_i-1)),]
+  
+  # Remove the wealth of unnecessary in-between data. 
+  as_col = which(stringr::str_detect(fm_data, "Average Signal"))
+  dn_col = which(stringr::str_detect(fm_data[1,], "Data Normalized"))
+  fm_data = fm_data[-(as_col:(dn_col-1))]
+  
+  # Remove the needless bottom 4 rows. 
+  fm_data = fm_data[-((nrow(fm_data)-3):nrow(fm_data)),]
+  
+  # Extract the proper names from the data. 
+  if (phospho) {
+    # Save the antibody names
+    Antibodies = fm_data[1][-(1:2),]
+    names(Antibodies) = "Name"
+    
+    # Extract everything within and outside of parenthesis. 
+    phospho = apply(Antibodies, 1, extract_parenthesis)
+    Name = apply(Antibodies, 1, exclude_parenthesis)
+    
+    # Extract the site itself. 
+    if (pho_spec) {choice = "Phospho-"} else {choice = "Ab-"}
+    print(choice)
+    site = c()
+    for (i in 1:length(phospho)) {
+      if (stringr::str_detect(phospho[i], choice)) {
+        site[i] = stringr::str_split(phospho[i], choice, simplify = TRUE)[,2]
+      } else {site[i] = NA}
+    }
+    
+    # Create the new antibodies dataframe. 
+    Antibodies = data.frame(Name = Name, P_site = site)
+    fm_data = fm_data[-1]
+  } else {
+    Antibodies = fm_data[1][-(1:2),]
+    names(Antibodies) = "Name"
+    fm_data = fm_data[-1]
+  }
+  
+  # Convert dataframe into list of dataframes. 
+  if ("Group Mean" %in% fm_data[1,]) {
+    
+    # Recalculate the indexes of important sections. 
+    dn_col = which(stringr::str_detect(fm_data[1,], "(?i)Data Normalized"))
+    gm_col = which(fm_data[1,] == "Group Mean")
+    gc_col = which(fm_data[1,] == "Group CV")
+    
+    # Define the filenames based on the group names. 
+    file_names = as.character(fm_data[gm_col:(gc_col - 2)][2,], na.rm = TRUE)
+    
+    # Remove the group data. 
+    fm_data = fm_data[-((gm_col-1): length(fm_data))]
+    
+    # Find the number of replicates per group. 
+    N_reps = length(fm_data[dn_col:(gm_col - 2)])/length(file_names)
+    
+    # Remove the unneeded rows. 
+    fm_data = fm_data[-(1:2),]
+    
+    files = list()
+    for (i in 1:length(file_names)) {
+      temp = fm_data[i:(i + N_reps - 1)]
+      rep_names = sprintf("Rep_%s",seq(1:N_reps))
+      colnames(temp) = c(rep_names)
+      temp = sapply(temp,as.numeric)
+      temp = cbind(Antibodies, temp)
+      temp = data.table::as.data.table(temp)
+      files = append(files, list(temp))
+      temp = NULL
+    }
+    names(files) = file_names
+    Antibodies = NULL
+    fm_data = NULL
+    
+  } else {
+    # Define the filenames based on the sample names. 
+    file_names = as.character(fm_data[2,])
+    
+    # Remove extra columns if necessary. 
+    if (any(file_names == "NA")) {
+      x = which(file_names == "NA")
+      fm_data = fm_data[-(x:length(fm_data))]
+      file_names = file_names[-(x:length(file_names))]
+    }
+    
+    # Find the number of samples.  
+    N_samps = length(file_names)
+    
+    # Remove the unneeded rows. 
+    fm_data = fm_data[-(1:2),]
+    
+    # Save all samples
+    files = list()
+    for (i in 1:length(file_names)) {
+      temp = fm_data[i]
+      colnames(temp) = c("Rep_1")
+      temp = sapply(temp,as.numeric)
+      temp = cbind(Antibodies, temp)
+      temp = tidyr::drop_na(temp)
+      temp = data.table::as.data.table(temp)
+      files = append(files, list(temp))
+      temp = NULL
+    }
+    names(files) = file_names
+    Antibodies = NULL
+    fm_data = NULL
+  }
+  return(files)
+}
+
+get_full_moon_names = function(infile) {
+  # Load in the excel file. 
+  fm_data = readxl::read_excel(infile$datapath, sheet = "Assay Data")
+  
+  # Extract just the part around the Average Signal Data.  
+  as_col = which(stringr::str_detect(fm_data, "Average Signal"))
+  fm_data = fm_data[(as_col - 1):length(fm_data)]
+  
+  # Remove the empty rows.
+  as_i = which(stringr::str_detect(c(fm_data[[2]]), "Average Signal"))
+  fm_data = fm_data[-(1:(as_i-1)),]
+  
+  # Remove the wealth of unnecessary in-between data. 
+  as_col = which(stringr::str_detect(fm_data, "Average Signal"))
+  dn_col = which(stringr::str_detect(fm_data[1,], "Data Normalized"))
+  fm_data = fm_data[-(as_col:(dn_col-1))]
+  fm_data = fm_data[-1]
+  
+  # Convert dataframe into list of dataframes. 
+  if ("Group Mean" %in% fm_data[1,]) {
+    
+    # Recalculate the indexes of important sections. 
+    gm_col = which(fm_data[1,] == "Group Mean")
+    gc_col = which(fm_data[1,] == "Group CV")
+    
+    # Define the filenames based on the group names. 
+    file_names = as.character(fm_data[gm_col:(gc_col - 2)][2,], na.rm = TRUE)
+    
+  } else {
+    # Define the filenames based on the sample names. 
+    file_names = as.character(fm_data[2,])
+    
+    # Remove extra columns if necessary. 
+    if (any(file_names == "NA")) {
+      x = which(file_names == "NA")
+      fm_data = fm_data[-(x:length(fm_data))]
+      file_names = file_names[-(x:length(file_names))]
+    }
+  }
+  return(file_names)
+}
+
 ######################### round_any #####################################################
 ## A helper function that lets one round to any decimal position.  
 #########################################################################################
 round_any = function(x, accuracy, f=round){f(x/ accuracy) * accuracy}
+
+######################### extract/exclude parentheses ###################################
+## Helper functions that allow for part of a character string within/outside of parentheses
+## to be isolated. 
+#########################################################################################
+
+extract_parenthesis = function(x) {
+  y = gsub("(?<=\\()[^()]*(?=\\))(*SKIP)(*F)|.", "", as.character(x), perl=T)
+  return(y)
+}
+
+exclude_parenthesis = function(x) {
+  y = gsub(r"{\s*\([^\)]+\)}","",as.character(x), perl=T)
+  return(y)
+}
 

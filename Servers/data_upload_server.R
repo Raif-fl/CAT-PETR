@@ -42,6 +42,7 @@ output$comp_choice = renderUI({
   infile = input$upload
   if (input$data_type == "ud") {names = stringr::str_remove(infile$name, ".csv")}
   else if (input$data_type == "kd") {names = stringr::str_remove(infile$name, ".txt")}
+  else if (input$data_type == "fmd") {names = fmd_names$name}
   
   # Used to reset everything whenever ran_list_1 is changed. 
   blank = comp_reset()
@@ -98,14 +99,14 @@ output$compare = renderUI({
 # Create the optional inputs for phospho-site information. 
 output$apo_name = renderUI({  
   req(input$upload)
-  if (input$data_type == "cpd") {return(NULL)}
+  if (input$data_type == "cpd" | input$data_type == "fmd") {return(NULL)}
   if (input$data_type == "ud") {
     # Check if the inputs include P-sites. 
     infile = input$upload 
     df = utils::read.table(infile$datapath[1], head = TRUE, nrows = 1, sep = ",")
     if (!"P_site" %in% stringr::str_to_sentence(base::colnames(df))) {return(NULL)}
   }
-  # If the uploads do include the P-site, create a text input. 
+  # If the uploads do include the P-site, create 2 inputs. 
   tagList(
     textInput("apo_name", label = "Phospho-site (P_site) name used for pan-specific entries", value = "Pan"),
     radioButtons("apo_pho", label = "Complete analysis using pan-specific or phospho-specific data?",
@@ -132,6 +133,37 @@ output$max_error = renderUI({
   if (input$data_type == "kd") {
     sliderInput("max_error",label ="Cutoff for percent error between technical replicates",
                 min = 0, max = 200, value = 50)} else (return(NULL))
+})
+
+# A Radio buttons for selecting the type of full moon biosystems array. 
+output$fmd_phospho = renderUI({
+  req(input$upload)
+  if (input$data_type == "fmd") {
+    radioButtons("fmd_phospho", label = "Which type of array service?",
+                 choices = list("Phospho Array" = TRUE, "Expression Array" = FALSE))
+    } else (return(NULL))
+})
+output$fmd_pho_spec = renderUI({
+  req(input$upload)
+  if (input$data_type == "fmd" && input$fmd_phospho == TRUE) {
+    radioButtons("fmd_pho_spec", label = "Which type of site specific data?",
+                 choices = list("Phosphorylation Dependent (Phospho)" = TRUE,
+                                "Phosphorylation Independent (Ab)" = FALSE))
+  } else (return(NULL))
+})
+output$fmd_pho_spec = renderUI({
+  req(input$upload)
+  if (input$data_type == "fmd" && input$fmd_phospho == TRUE) {
+    radioButtons("fmd_pho_spec", label = "Which type of site specific data?",
+                 choices = list("Phosphorylation Dependent (Phospho)" = TRUE,
+                                "Phosphorylation Independent (Ab)" = FALSE))
+  } else (return(NULL))
+})
+
+# A button that runs the processing for full moon data
+output$process_fmd = renderUI({
+  if(is.null(input$upload) | input$data_type != "fmd") {return(NULL)}
+  actionButton("process_fmd", "Process Full Moon Biosystems Data")
 })
 
 ##### Example tables #####
@@ -178,8 +210,18 @@ values$data = readRDS("example.Rdata")
 run_cybert = eventReactive(input$process,  {
   
   # Load in the data.
-  if (input$data_type == "ud") {kd = FALSE}
-  else if (input$data_type == "kd") {kd = TRUE}
+  if (input$data_type == "ud") {
+    kd = FALSE
+    fmd = FALSE
+    }
+  else if (input$data_type == "kd") {
+    kd = TRUE
+    fmd = FALSE
+   }
+  else if (input$data_type == "fmd") {
+    kd = FALSE
+    fmd = TRUE
+   }
 
   # Create token IDs.
   token$id = c(token$id, uuid::UUIDgenerate())
@@ -190,7 +232,8 @@ run_cybert = eventReactive(input$process,  {
     func = compare_CyberT,
     args = list(infile = input$upload, controls = input$control_list, treatments = input$treatment_list, 
                 analysis = input$apo_pho, apo_name = input$apo_name, no_conf = input$no_conf,
-                var_norm = input$var_norm, kd = kd, max_error = input$max_error),
+                var_norm = input$var_norm, kd = kd, fmd = fmd, max_error = input$max_error,
+                phospho = input$fmd_phospho, pho_spec = input$fmd_pho_spec),
     package = TRUE
   )
   
@@ -290,6 +333,25 @@ observeEvent(input$clear, {
       text <<- c("Console Log: \n")
       output$console = renderText(text)
     }
+})
+
+##### Processing Full Moon Biosystems Data #####
+
+#input$fmd_phospho, input$fmd_pho_spec
+
+# Initialize reactive values to store the cleaned kinexus files. 
+fmd_names = reactiveValues(name = NULL) 
+
+###!!!### I can definitely trigger this in a smarter way but oh well. 
+# Process the kinexus data. 
+observeEvent(input$process_fmd, {
+  
+  fmd_names$name = get_full_moon_names(input$upload)
+  
+  output$console = renderText(expr = {
+      text <<- c(text, "Full Moon Data Pre-processed \n")
+      return(text)
+    })
 })
 
 ##### Loading pre-processed data #####
