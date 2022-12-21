@@ -12,7 +12,7 @@ data_upload_tab <-
                uiOutput("max_error"),
                uiOutput("fmd_phospho"),
                uiOutput("fmd_pho_spec"),
-               uiOutput("process_fmd"),
+               #uiOutput("process_fmd"),
                uiOutput("apo_name"),
                uiOutput("apo_pho"),
                uiOutput("compare"),

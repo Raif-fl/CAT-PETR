@@ -31,8 +31,12 @@ compModal = function(failed = FALSE) {
 }
 
 # Shows the pop-up defined above when someone hits the choose comparisons button. 
+fmd_names = reactiveValues(names = NULL) 
 observeEvent(input$compare, {
   showModal(compModal())
+  if(input$data_type == "fmd") {
+    fmd_names$names = get_full_moon_names(input$upload)
+  }
 })
 
 # A bucket list that allows users to define which comparisons to visualize. 
@@ -42,7 +46,7 @@ output$comp_choice = renderUI({
   infile = input$upload
   if (input$data_type == "ud") {names = stringr::str_remove(infile$name, ".csv")}
   else if (input$data_type == "kd") {names = stringr::str_remove(infile$name, ".txt")}
-  else if (input$data_type == "fmd") {names = fmd_names$name}
+  else if (input$data_type == "fmd") {names = fmd_names$names}
   
   # Used to reset everything whenever ran_list_1 is changed. 
   blank = comp_reset()
@@ -152,7 +156,7 @@ output$fmd_pho_spec = renderUI({
   } else (return(NULL))
 })
 output$fmd_pho_spec = renderUI({
-  req(input$upload)
+  req(input$upload, input$fmd_phospho)
   if (input$data_type == "fmd" && input$fmd_phospho == TRUE) {
     radioButtons("fmd_pho_spec", label = "Which type of site specific data?",
                  choices = list("Phosphorylation Dependent (Phospho)" = TRUE,
@@ -333,25 +337,6 @@ observeEvent(input$clear, {
       text <<- c("Console Log: \n")
       output$console = renderText(text)
     }
-})
-
-##### Processing Full Moon Biosystems Data #####
-
-#input$fmd_phospho, input$fmd_pho_spec
-
-# Initialize reactive values to store the cleaned kinexus files. 
-fmd_names = reactiveValues(name = NULL) 
-
-###!!!### I can definitely trigger this in a smarter way but oh well. 
-# Process the kinexus data. 
-observeEvent(input$process_fmd, {
-  
-  fmd_names$name = get_full_moon_names(input$upload)
-  
-  output$console = renderText(expr = {
-      text <<- c(text, "Full Moon Data Pre-processed \n")
-      return(text)
-    })
 })
 
 ##### Loading pre-processed data #####

@@ -42,9 +42,6 @@ compare_CyberT = function(infile, controls, treatments, analysis = NULL,
   col_options = col_options[order(col_options)]
   col_options = as.character(col_options)
 
-  print(class(datatables[[1]]))
-  #Sys.sleep(30)
-
   # Clean up the contents of the datatables.
   for (i in 1:length(datatables)) {
     # Adjust the format of the column names.
@@ -620,19 +617,19 @@ clean_kinexus = function(infile, max_error = 50) {
 
 clean_full_moon = function(infile, phospho = FALSE, pho_spec = FALSE) {
   # Load in the excel file. 
-  fm_data = readxl::read_excel(infile$datapath, sheet = "Assay Data")
+  fm_data = suppressWarnings(suppressMessages(readxl::read_excel(infile$datapath, sheet = "Assay Data")))
   
   # Extract just the part around the Average Signal Data.  
-  as_col = which(stringr::str_detect(fm_data, "Average Signal"))
+  as_col = suppressWarnings(which(stringr::str_detect(fm_data, "Average Signal")))
   fm_data = fm_data[(as_col - 1):length(fm_data)]
   
   # Remove the empty rows.
-  as_i = which(stringr::str_detect(c(fm_data[[2]]), "Average Signal"))
+  as_i = suppressWarnings(which(stringr::str_detect(c(fm_data[[2]]), "Average Signal")))
   fm_data = fm_data[-(1:(as_i-1)),]
   
   # Remove the wealth of unnecessary in-between data. 
-  as_col = which(stringr::str_detect(fm_data, "Average Signal"))
-  dn_col = which(stringr::str_detect(fm_data[1,], "Data Normalized"))
+  as_col = suppressWarnings(which(stringr::str_detect(fm_data, "Average Signal")))
+  dn_col = suppressWarnings(which(stringr::str_detect(fm_data[1,], "Data Normalized")))
   fm_data = fm_data[-(as_col:(dn_col-1))]
   
   # Remove the needless bottom 4 rows. 
@@ -650,7 +647,6 @@ clean_full_moon = function(infile, phospho = FALSE, pho_spec = FALSE) {
     
     # Extract the site itself. 
     if (pho_spec) {choice = "Phospho-"} else {choice = "Ab-"}
-    print(choice)
     site = c()
     for (i in 1:length(phospho)) {
       if (stringr::str_detect(phospho[i], choice)) {
@@ -671,7 +667,7 @@ clean_full_moon = function(infile, phospho = FALSE, pho_spec = FALSE) {
   if ("Group Mean" %in% fm_data[1,]) {
     
     # Recalculate the indexes of important sections. 
-    dn_col = which(stringr::str_detect(fm_data[1,], "(?i)Data Normalized"))
+    dn_col = suppressWarnings(which(stringr::str_detect(fm_data[1,], "(?i)Data Normalized")))
     gm_col = which(fm_data[1,] == "Group Mean")
     gc_col = which(fm_data[1,] == "Group CV")
     
@@ -740,10 +736,10 @@ clean_full_moon = function(infile, phospho = FALSE, pho_spec = FALSE) {
 
 get_full_moon_names = function(infile) {
   # Load in the excel file. 
-  fm_data = readxl::read_excel(infile$datapath, sheet = "Assay Data")
+  fm_data = suppressMessages(readxl::read_excel(infile$datapath, sheet = "Assay Data"))
   
   # Extract just the part around the Average Signal Data.  
-  as_col = which(stringr::str_detect(fm_data, "Average Signal"))
+  as_col = suppressWarnings(which(stringr::str_detect(fm_data, "Average Signal")))
   fm_data = fm_data[(as_col - 1):length(fm_data)]
   
   # Remove the empty rows.
@@ -751,7 +747,7 @@ get_full_moon_names = function(infile) {
   fm_data = fm_data[-(1:(as_i-1)),]
   
   # Remove the wealth of unnecessary in-between data. 
-  as_col = which(stringr::str_detect(fm_data, "Average Signal"))
+  as_col = suppressWarnings(which(stringr::str_detect(fm_data, "Average Signal")))
   dn_col = which(stringr::str_detect(fm_data[1,], "Data Normalized"))
   fm_data = fm_data[-(as_col:(dn_col-1))]
   fm_data = fm_data[-1]
