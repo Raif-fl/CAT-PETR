@@ -432,7 +432,6 @@ abs_max = function(vector) {
 }
 
 ######################### hmap_prep #####################################################
-##  hmap_prep
 ##    dataframes = A list of dataframes outputted by the compare_CyberT function
 ##    title = A string that will be used as the title of the plot. 
 ##    order = A list of strings that correspond to the named elements in the 
@@ -468,7 +467,6 @@ abs_max = function(vector) {
   }
 
 ######################### hmap ############################################################
-## hmap 
 ##    bound = a dataframe that was created by the hmap_prep() function.
 ##    name_search = A vector containing the names of all genes/proteins to plot as strings. 
 ##    sort_by = An integer which specifies which of the columns the heatmap will sort by (left to right).
@@ -608,7 +606,7 @@ clean_kinexus = function(infile, max_error = 50) {
 }
 
 ######################### clean_full_moon ###############################################
-##    path = The path to a raw data file provided by Kinexus.
+##    infile = The path to a raw data file provided by Kinexus.
 ##    phospho = A boolean which specifies if working with phosphorylation data or
 ##              expression data. 
 ##    pho_spec = A boolean which specifies if looking at site specific Ab data or 
@@ -637,7 +635,7 @@ clean_full_moon = function(infile, phospho = FALSE, pho_spec = FALSE) {
   
   # Extract the proper names from the data. 
   if (phospho) {
-    # Save the antibody names
+    # Save the antibody names.
     Antibodies = fm_data[1][-(1:2),]
     names(Antibodies) = "Name"
     
@@ -683,9 +681,10 @@ clean_full_moon = function(infile, phospho = FALSE, pho_spec = FALSE) {
     # Remove the unneeded rows. 
     fm_data = fm_data[-(1:2),]
     
+    # Save all samples.
     files = list()
     for (i in 1:length(file_names)) {
-      temp = fm_data[i:(i + N_reps - 1)]
+      temp = fm_data[(i*N_reps - N_reps + 1):(i*N_reps)]
       rep_names = sprintf("Rep_%s",seq(1:N_reps))
       colnames(temp) = c(rep_names)
       temp = sapply(temp,as.numeric)
@@ -715,7 +714,7 @@ clean_full_moon = function(infile, phospho = FALSE, pho_spec = FALSE) {
     # Remove the unneeded rows. 
     fm_data = fm_data[-(1:2),]
     
-    # Save all samples
+    # Save all samples.
     files = list()
     for (i in 1:length(file_names)) {
       temp = fm_data[i]
@@ -733,6 +732,10 @@ clean_full_moon = function(infile, phospho = FALSE, pho_spec = FALSE) {
   }
   return(files)
 }
+
+######################### get_full_moon_names ###############################################
+##    A helper function that extracts the sample names from full moon excel files.
+#########################################################################################
 
 get_full_moon_names = function(infile) {
   # Load in the excel file. 
@@ -752,9 +755,8 @@ get_full_moon_names = function(infile) {
   fm_data = fm_data[-(as_col:(dn_col-1))]
   fm_data = fm_data[-1]
   
-  # Convert dataframe into list of dataframes. 
+  # Extract the sample names based on whether these are grouped samples or not.
   if ("Group Mean" %in% fm_data[1,]) {
-    
     # Recalculate the indexes of important sections. 
     gm_col = which(fm_data[1,] == "Group Mean")
     gc_col = which(fm_data[1,] == "Group CV")
@@ -766,7 +768,7 @@ get_full_moon_names = function(infile) {
     # Define the filenames based on the sample names. 
     file_names = as.character(fm_data[2,])
     
-    # Remove extra columns if necessary. 
+    # Remove non-applicable sample names if necessary.
     if (any(file_names == "NA")) {
       x = which(file_names == "NA")
       fm_data = fm_data[-(x:length(fm_data))]
@@ -777,13 +779,13 @@ get_full_moon_names = function(infile) {
 }
 
 ######################### round_any #####################################################
-## A helper function that lets one round to any decimal position.  
+##    A helper function that lets one round to any decimal position.  
 #########################################################################################
 round_any = function(x, accuracy, f=round){f(x/ accuracy) * accuracy}
 
 ######################### extract/exclude parentheses ###################################
-## Helper functions that allow for part of a character string within/outside of parentheses
-## to be isolated. 
+##    Helper functions that allow for part of a character string within/outside of parentheses
+##    to be isolated. 
 #########################################################################################
 
 extract_parenthesis = function(x) {
