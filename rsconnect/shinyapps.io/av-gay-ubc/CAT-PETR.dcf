@@ -5,9 +5,9 @@ account: av-gay-ubc
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 7859013
-bundleId: 6646334
+bundleId: 6662603
 url: https://av-gay-ubc.shinyapps.io/CAT-PETR/
-when: 1671230359.5944
-lastSyncTime: 1671230359.59441
+when: 1671660350.0525
+lastSyncTime: 1671660350.05252
 asMultiple: FALSE
 asStatic: FALSE
