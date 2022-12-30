@@ -4,7 +4,7 @@ CAT PETR (Convenient Analysis Tool for Phosphorylation and Expression Testing in
 
 # Installation
 
-CAT PETR has been developed in R 4.2.1 and Shiny 1.7.2 and uses a wide variety of different packages. For ease of use, CAT PETR is provided as web application using shinyapps.io servers. This web application can be accessed using this link: < https://av-gay-ubc.shinyapps.io/CAT-PETR/> If you wish to run CAT PETR on your local computer, you will first need to Install R and R studio using the instructions from this link <https://www.r-project.org/> and this link <https://www.rstudio.com/products/rstudio/download/> respectively. Then, download or clone this GitHub repository using the green 'code' button at the top of the repository. Now, open and run the 'Install_Dependencies.R' file in Rstudio. After the dependencies are done installing, open up the app.R file and run the app by hitting the Run App button in Rstudio or by running the shiny::runApp() command. This should open up the app on your personal computer.
+CAT PETR has been developed in R 4.2.1 and Shiny 1.7.2 and uses a wide variety of different packages. For ease of use, CAT PETR is provided as web application using shinyapps.io servers. This web application can be accessed using this link: \< <https://av-gay-ubc.shinyapps.io/CAT-PETR/>\> If you wish to run CAT PETR on your local computer, you will first need to Install R and R studio using the instructions from this link <https://www.r-project.org/> and this link <https://www.rstudio.com/products/rstudio/download/> respectively. Then, download or clone this GitHub repository using the green 'code' button at the top of the repository. Now, open and run the 'Install_Dependencies.R' file in Rstudio. After the dependencies are done installing, open up the app.R file and run the app by hitting the Run App button in Rstudio or by running the shiny::runApp() command. This should open up the app on your personal computer.
 
 # Tutorial
 
@@ -117,7 +117,7 @@ The Heatmap sub tab is unique in that the contents of the plot are entirely depe
 
 23. Download the plot data using the button at the bottom of the sidebar.
 
-Please consult the User Manual for further details.
+Please consult the User Manual for further details (<https://github.com/Raif-fl/CAT-PETR/User_Manual.pdf>).
 
 | Keegan R. Flanagan, University of British Columbia
 | Khanh Dao Duc, University of British Columbia
