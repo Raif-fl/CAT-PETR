@@ -117,7 +117,7 @@ The Heatmap sub tab is unique in that the contents of the plot are entirely depe
 
 23. Download the plot data using the button at the bottom of the sidebar.
 
-Please consult the User Manual for further details (<https://github.com/Raif-fl/CAT-PETR/User_Manual.pdf>).
+Please consult the User Manual for further details (<https://github.com/Raif-fl/CAT-PETR/blob/main/User_Manual.pdf>).
 
 | Keegan R. Flanagan, University of British Columbia
 | Khanh Dao Duc, University of British Columbia
