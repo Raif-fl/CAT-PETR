@@ -82,7 +82,7 @@ tutorial_tab <-
                     treatment category that are directly adjacent to them as demonstrated in the image below. 
                     Please choose controls and treatments to match this image."),
                    br(),
-                   img(src = "bucket_list.png", height = "auto", width = "70%"),
+                   img(src = "Bucket_list.png", height = "auto", width = "70%"),
                    br(),
                      tags$li("Once the controls and treatments are selected, the user must the choose
                      normalization and t-test methods for the differential analysis. The normalization
@@ -193,7 +193,7 @@ tutorial_tab <-
                            on the graphs. Drag and drop the comparisons to match the image below and then 
                            hit the generate plots button."),
                    br(),
-                   img(src = "define_axes.png", height = "auto", width = "70%"),
+                   img(src = "Define_axes.png", height = "auto", width = "70%"),
                    br(),
                    tags$li("Hit the deselect all button below the gene/protein searchbar in order to clear it."),
                    br(),
