@@ -208,7 +208,13 @@ jobs = reactiveValues()
 
 # Initialize a reactive value to store the data. 
 values = reactiveValues(data = NULL) 
-values$data = readRDS("example.Rdata")
+
+# If the data type is example data, then
+observeEvent(input$data_type, {
+  if (input$data_type == "ed") {
+    values$data = readRDS("example.Rdata")
+  }
+})
 
 # If the process button is hit, create a reactive expression that runs CyberT in the backgorund. 
 run_cybert = eventReactive(input$process,  {

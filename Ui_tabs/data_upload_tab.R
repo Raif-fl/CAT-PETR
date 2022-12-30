@@ -1,12 +1,13 @@
 data_upload_tab <- 
-  tabPanel("data Upload",
+  tabPanel("Data Upload",
            sidebarLayout(
              sidebarPanel(
                fluidRow(column(12, div(style="display: inline-block;",h5("Select Upload data Type")),
                                actionButton("format_info", label = "  ", icon = icon("question"), 
                                             style='padding:1px; font-size:80%', width = "28px"))),
                radioButtons("data_type", label = "",
-                            choices = list("User data" = "ud", "CAT PETR data" = "cpd", "Kinexus data" = "kd",
+                            choices = list("Example data" = "ed", "User data" = "ud",
+                                           "CAT PETR data" = "cpd", "Kinexus data" = "kd",
                                            "Full Moon Biosystems data" = "fmd")),
                fileInput("upload", NULL, label = h5("Upload data"), multiple = TRUE),
                uiOutput("max_error"),

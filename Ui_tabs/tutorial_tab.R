@@ -46,7 +46,8 @@ tutorial_tab <-
                    img(src = "download_plain.png", height = "auto", width = "100%"),
                    br(),
                      "(1) Selection boxes specifying if uploading un-analyzed user data, pre-analyzed CAT PETR data,
-                     or the raw data files from a Kinexus KAM-1325 microarray. Question mark brings up
+                     the raw data files from a Kinexus KAM-1325 microarray, or the Microsoft Excel files provided by 
+                     Full Moon Biosystems' antibody array services. Question mark brings up
                      example input formats. (2) Data upload section. (3) Button which downloads 
                      analyzed data as a .zip file. (4) Console log which displays the analysis progress
                      along with warnings, errors, and messages. (5) Button which clears the console log.

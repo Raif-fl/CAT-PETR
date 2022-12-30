@@ -44,7 +44,7 @@ home_tab <-
   br(),
   fluidRow(column(2),
            column(1, img(src = "UBC_logo.png", height = "auto", width = "45px", align = "right")),
-           column(7, "Developed by Yossef Av-Gay's and Khahn Da-Duc's research groups at 
-           the University of British Columbia. Please address your questions to Khanh Dao Duc.")),
+           column(7, "Developed by Yossef Av-Gay's and Khahn Dao Duc's research groups at 
+           the University of British Columbia. Please address questions to kdd@math.ubc.ca")),
 
 )
