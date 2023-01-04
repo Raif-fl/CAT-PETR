@@ -1,3 +1,18 @@
+##### Data upload handling #####
+
+# Create a reactive value to store the data.
+uploaded = reactiveValues(infile = NULL)
+
+# Whenever someone uploads data, save it in the reactive value
+observeEvent(input$upload, {
+  uploaded$infile = input$upload
+})
+
+# When someone switches data type, reset the reactive value. 
+observeEvent(input$data_type, {
+  uploaded$infile = NULL
+})
+
 ##### Defining the Bucket List comparison selection #####
 
 # Initialize a reactive value that is simply used to update the bucket list. 
@@ -35,7 +50,7 @@ fmd_names = reactiveValues(names = NULL)
 observeEvent(input$compare, {
   showModal(compModal())
   if(input$data_type == "fmd") {
-    fmd_names$names = get_full_moon_names(input$upload)
+    fmd_names$names = get_full_moon_names(uploaded$infile)
   }
 })
 
@@ -43,7 +58,7 @@ observeEvent(input$compare, {
 output$comp_choice = renderUI({
   
   # Load in the uploaded data files. 
-  infile = input$upload
+  infile = uploaded$infile
   if (input$data_type == "ud") {names = stringr::str_remove(infile$name, ".csv")}
   else if (input$data_type == "kd") {names = stringr::str_remove(infile$name, ".txt")}
   else if (input$data_type == "fmd") {names = fmd_names$names}
@@ -72,7 +87,7 @@ observeEvent(input$sample_list, {
 })
 
 # Reset the buckets if new data is uploaded. 
-observeEvent(input$upload, {
+observeEvent(uploaded$infile, {
   global_cont <<- list()
   global_treat <<- list()
   comp_reset(c(comp_reset(), 1))
@@ -94,19 +109,31 @@ output$no_conf = renderUI({
 
 ##### Reactive UI #####
 
+# If the data type is not ed, then have a file upload option.
+output$upload = renderUI({
+  if(input$data_type == "ed") {return(NULL)}
+  fileInput("upload", NULL, label = h5("Upload data"), multiple = TRUE)
+})
+
+# If the data type is ed, then have a button which loads the example data. 
+output$load_example = renderUI({
+  if(input$data_type != "ed") {return(NULL)}
+  actionButton("load_example", "Load Example")
+})
+
 # A button that brings up the comparison selection bucket list. 
 output$compare = renderUI({
-  if(is.null(input$upload) | input$data_type == "cpd") {return(NULL)}
+  if(is.null(uploaded$infile) | input$data_type == "cpd" | input$data_type == "ed") {return(NULL)}
     actionButton("compare", "Choose Comparisons")
 })
 
 # Create the optional inputs for phospho-site information. 
 output$apo_name = renderUI({  
-  req(input$upload)
-  if (input$data_type == "cpd" | input$data_type == "fmd") {return(NULL)}
+  req(uploaded$infile)
+  if (input$data_type == "cpd" | input$data_type == "fmd" | input$data_type == "ed") {return(NULL)}
   if (input$data_type == "ud") {
     # Check if the inputs include P-sites. 
-    infile = input$upload 
+    infile = uploaded$infile 
     df = utils::read.table(infile$datapath[1], head = TRUE, nrows = 1, sep = ",")
     if (!"P_site" %in% stringr::str_to_sentence(base::colnames(df))) {return(NULL)}
   }
@@ -133,7 +160,7 @@ output$cyber_link = renderUI({
 
 # A slider that allows the user to select the cutoff for disagreement between technical replicates. 
 output$max_error = renderUI({
-  req(input$upload)
+  req(uploaded$infile)
   if (input$data_type == "kd") {
     sliderInput("max_error",label ="Cutoff for percent error between technical replicates",
                 min = 0, max = 200, value = 50)} else (return(NULL))
@@ -141,14 +168,14 @@ output$max_error = renderUI({
 
 # A Radio buttons for selecting the type of full moon biosystems array. 
 output$fmd_phospho = renderUI({
-  req(input$upload)
+  req(uploaded$infile)
   if (input$data_type == "fmd") {
     radioButtons("fmd_phospho", label = "Which type of array service?",
                  choices = list("Phospho Array" = TRUE, "Expression Array" = FALSE))
     } else (return(NULL))
 })
 output$fmd_pho_spec = renderUI({
-  req(input$upload)
+  req(uploaded$infile)
   if (input$data_type == "fmd" && input$fmd_phospho == TRUE) {
     radioButtons("fmd_pho_spec", label = "Which type of site specific data?",
                  choices = list("Phosphorylation Dependent (Phospho)" = TRUE,
@@ -156,7 +183,7 @@ output$fmd_pho_spec = renderUI({
   } else (return(NULL))
 })
 output$fmd_pho_spec = renderUI({
-  req(input$upload, input$fmd_phospho)
+  req(uploaded$infile, input$fmd_phospho)
   if (input$data_type == "fmd" && input$fmd_phospho == TRUE) {
     radioButtons("fmd_pho_spec", label = "Which type of site specific data?",
                  choices = list("Phosphorylation Dependent (Phospho)" = TRUE,
@@ -164,10 +191,13 @@ output$fmd_pho_spec = renderUI({
   } else (return(NULL))
 })
 
-# A button that runs the processing for full moon data
-output$process_fmd = renderUI({
-  if(is.null(input$upload) | input$data_type != "fmd") {return(NULL)}
-  actionButton("process_fmd", "Process Full Moon Biosystems Data")
+# The download button for all of the processed data
+output$get_dwnld_btn = renderUI({
+  if (input$data_type == "ed" | is.null(values$data)) {return(NULL)}
+  tagList(
+    h5("Download Processed Data"),
+    shinyWidgets::downloadBttn("download_btn", style='simple', size = "sm", block = TRUE)
+  )
 })
 
 ##### Example tables #####
@@ -209,11 +239,21 @@ jobs = reactiveValues()
 # Initialize a reactive value to store the data. 
 values = reactiveValues(data = NULL) 
 
-# If the data type is example data, then
-observeEvent(input$data_type, {
-  if (input$data_type == "ed") {
-    values$data = readRDS("example.Rdata")
-  }
+# If the data type is example data, then add a button that loads the
+observeEvent(input$load_example, {
+  values$data = readRDS("example.Rdata")
+  
+  # Show a completion message. 
+  shinyWidgets::show_alert(
+    title = "Example data Loaded",
+    type = "success"
+  )
+  
+  output$console = renderText(expr = {
+      text <<- c(text, "Example Data Loaded \n")
+      return(text)
+    })
+  
 })
 
 # If the process button is hit, create a reactive expression that runs CyberT in the backgorund. 
@@ -240,7 +280,7 @@ run_cybert = eventReactive(input$process,  {
   # Runs in the background.
   jobs[[token$last_id]] = callr::r_bg(
     func = compare_CyberT,
-    args = list(infile = input$upload, controls = input$control_list, treatments = input$treatment_list, 
+    args = list(infile = uploaded$infile, controls = input$control_list, treatments = input$treatment_list, 
                 analysis = input$apo_pho, apo_name = input$apo_name, no_conf = input$no_conf,
                 var_norm = input$var_norm, kd = kd, fmd = fmd, max_error = input$max_error,
                 phospho = input$fmd_phospho, pho_spec = input$fmd_pho_spec),
@@ -348,12 +388,12 @@ observeEvent(input$clear, {
 ##### Loading pre-processed data #####
 
 # If pre-process data is uploaded, directly load it into the reactive values. 
-observeEvent(input$upload,  {
+observeEvent(uploaded$infile,  {
   
   if (!input$data_type == "cpd") {return(NULL)}
   
   # Define the initial data upload
-  infile = input$upload
+  infile = uploaded$infile
   
   # If there is an issue with the uploaded files or chosen comparisons, throw an error. 
   if (any(is.na(stringr::str_match(infile$name, ".csv")))) {
